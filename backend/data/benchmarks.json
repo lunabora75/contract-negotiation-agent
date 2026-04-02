@@ -1,0 +1,57 @@
+{
+  "roles": {
+    "Project Manager": {
+      "description": "Senior project manager for technology programs",
+      "p25": 125, "p50": 145, "p75": 165, "p90": 190,
+      "geography_adjustments": { "US-Northeast": 1.10, "US-West": 1.12, "US-South": 0.95, "UK": 0.90 }
+    },
+    "Solution Architect": {
+      "description": "Principal-level solutions / enterprise architect",
+      "p25": 185, "p50": 205, "p75": 228, "p90": 255,
+      "geography_adjustments": { "US-Northeast": 1.10, "US-West": 1.15, "US-South": 0.93, "UK": 0.88 }
+    },
+    "Senior Data Engineer": {
+      "description": "Senior data engineer / data platform engineer",
+      "p25": 155, "p50": 175, "p75": 198, "p90": 222,
+      "geography_adjustments": { "US-Northeast": 1.08, "US-West": 1.14, "US-South": 0.94, "UK": 0.89 }
+    },
+    "Junior Data Engineer": {
+      "description": "Junior / associate data engineer",
+      "p25": 88, "p50": 108, "p75": 128, "p90": 148,
+      "geography_adjustments": { "US-Northeast": 1.07, "US-West": 1.10, "US-South": 0.93, "UK": 0.87 }
+    },
+    "Business Analyst": {
+      "description": "Senior business / functional analyst",
+      "p25": 105, "p50": 125, "p75": 145, "p90": 168,
+      "geography_adjustments": { "US-Northeast": 1.08, "US-West": 1.09, "US-South": 0.94, "UK": 0.91 }
+    },
+    "QA Lead": {
+      "description": "Senior QA / test engineering lead",
+      "p25": 100, "p50": 120, "p75": 140, "p90": 162,
+      "geography_adjustments": { "US-Northeast": 1.06, "US-West": 1.10, "US-South": 0.95, "UK": 0.90 }
+    },
+    "Scrum Master": {
+      "description": "Agile coach / scrum master",
+      "p25": 110, "p50": 130, "p75": 150, "p90": 172,
+      "geography_adjustments": { "US-Northeast": 1.07, "US-West": 1.09, "US-South": 0.94, "UK": 0.88 }
+    },
+    "Dev Lead": {
+      "description": "Technical lead / engineering lead",
+      "p25": 148, "p50": 170, "p75": 192, "p90": 218,
+      "geography_adjustments": { "US-Northeast": 1.09, "US-West": 1.13, "US-South": 0.93, "UK": 0.89 }
+    }
+  },
+  "payment_terms": {
+    "industry_standard": "Net 30",
+    "acceptable_range": "Net 15 to Net 45",
+    "above_market_flag": "Net 45+",
+    "milestone_norm": "Milestone payments preferred for fixed-fee engagements over $500K"
+  },
+  "industry_adjustments": {
+    "Financial Services": 1.12,
+    "Healthcare": 1.08,
+    "Retail": 0.97,
+    "Technology": 1.05,
+    "Government": 0.90
+  }
+}

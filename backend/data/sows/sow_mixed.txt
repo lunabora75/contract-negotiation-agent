@@ -1,0 +1,87 @@
+STATEMENT OF WORK
+Professional Services Agreement
+
+Contract Reference: SOW-2026-003
+Client: HealthFirst Insurance Group
+Vendor: BluePeak Technology Partners Inc.
+Effective Date: July 1, 2026
+Contract Duration: 10 months
+Total Estimated Value: $2,640,000
+
+1. PROJECT OVERVIEW
+HealthFirst Insurance Group ("Client") engages BluePeak Technology Partners Inc. ("Vendor") to deliver a Member Data Analytics Platform, providing 360-degree member views, predictive risk scoring, and claims analytics capabilities across the Client's US health insurance operations. The engagement covers design through to production deployment and stabilisation.
+
+2. SCOPE OF SERVICES
+
+2.1 Resource Roles and Billing Rates
+
+| Role                    | Level      | FTE  | Hourly Rate | Monthly Est.  |
+|------------------------|------------|------|-------------|---------------|
+| Project Manager         | Senior     | 1.0  | $155/hr     | $24,800       |
+| Solution Architect      | Principal  | 1.0  | $240/hr     | $38,400       |
+| Senior Data Engineer    | Senior     | 2.0  | $162/hr     | $51,840       |
+| Business Analyst        | Senior     | 2.0  | $152/hr     | $48,640       |
+| QA Lead                 | Mid        | 1.0  | $112/hr     | $17,920       |
+| Dev Lead                | Senior     | 1.0  | $198/hr     | $31,680       |
+
+Billing is based on 160 hours per FTE per calendar month.
+Rate escalation of 2.5% applies at the start of month 7.
+
+2.2 Key Deliverables
+- Member Data Model and conceptual-to-physical data dictionary
+- ETL pipeline for claims, eligibility, and provider data ingestion
+- Predictive risk scoring model (readmission, chronic condition onset)
+- Self-service analytics portal (Tableau / Power BI)
+- Data quality monitoring and alerting framework
+- HIPAA compliance audit documentation
+- Operational handover and knowledge transfer programme
+
+3. PAYMENT TERMS
+
+3.1 Invoicing Schedule: Monthly invoices due by the 3rd business day of the following month.
+3.2 Payment Due Date: All invoices payable within Net 30 days of receipt.
+3.3 Payment Basis: Time-and-materials for all phases.
+3.4 Late Payment: Interest at 1.5% per month on overdue balances.
+
+4. TERM AND TERMINATION
+
+4.1 This SOW commences on the Effective Date and continues for ten (10) calendar months.
+4.2 This agreement does not include a termination-for-convenience clause. Termination is permitted only in the event of a material breach by either party, subject to a 30-day cure period.
+
+5. INTELLECTUAL PROPERTY
+
+5.1 All deliverables, code, models, algorithms, data pipelines, and analytics assets developed under this SOW shall be jointly owned by the Client and the Vendor.
+5.2 Either party may commercialise jointly owned assets without the consent of the other party and without accounting to the other party.
+5.3 Vendor retains the right to use generalised learnings, anonymised model architectures, and methodology frameworks for other client engagements.
+5.4 Client-specific data and member PII shall remain exclusively the property of the Client and must be destroyed by the Vendor within 90 days of contract termination.
+
+6. LIABILITY
+
+6.1 Each party's aggregate liability is capped at $500,000 or the total fees paid in the preceding 6 months, whichever is greater.
+6.2 The liability cap does not apply to HIPAA breaches, data security incidents, or gross negligence.
+6.3 Vendor is not liable for indirect or consequential damages except in cases of data breach or IP misappropriation.
+
+7. SLA AND PERFORMANCE
+
+7.1 Resource availability guaranteed at 90% per month (excluding approved leave).
+7.2 Critical severity defects in delivered components to be resolved within 48 hours.
+7.3 High severity defects resolved within 5 business days.
+
+8. DATA AND SECURITY
+
+8.1 Vendor shall comply with all applicable HIPAA and HITECH requirements throughout the engagement.
+8.2 All Vendor personnel with access to member data must complete Client's security awareness training within 5 business days of engagement commencement.
+8.3 Vendor shall notify Client within 24 hours of any actual or suspected data security incident.
+
+9. GOVERNING LAW
+This agreement is governed by the laws of the State of Illinois.
+
+10. ENTIRE AGREEMENT
+This SOW constitutes the entire agreement with respect to the subject matter hereof.
+
+Signed:
+
+HealthFirst Insurance Group               BluePeak Technology Partners Inc.
+_____________________________            _____________________________
+Authorized Signatory                      Authorized Signatory
+Date: _______________                     Date: _______________

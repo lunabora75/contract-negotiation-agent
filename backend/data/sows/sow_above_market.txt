@@ -1,0 +1,79 @@
+STATEMENT OF WORK
+Professional Services Agreement
+
+Contract Reference: SOW-2026-001
+Client: TechCorp Financial Services Inc.
+Vendor: Apex Consulting Group LLC
+Effective Date: May 1, 2026
+Contract Duration: 12 months
+Total Estimated Value: $5,290,000
+
+1. PROJECT OVERVIEW
+TechCorp Financial Services Inc. ("Client") hereby engages Apex Consulting Group LLC ("Vendor") to provide professional consulting services for the Enterprise Data Platform Modernization initiative. The project encompasses the design, development, and deployment of a cloud-native data lakehouse architecture to replace the Client's legacy data warehouse infrastructure.
+
+2. SCOPE OF SERVICES
+
+2.1 Resource Roles and Billing Rates
+
+The Vendor shall provide the following professional resources at the rates specified below:
+
+| Role                    | Level      | FTE  | Hourly Rate | Monthly Est.  |
+|------------------------|------------|------|-------------|---------------|
+| Project Manager         | Senior     | 1.0  | $195/hr     | $31,200       |
+| Solution Architect      | Principal  | 1.0  | $265/hr     | $42,400       |
+| Senior Data Engineer    | Senior     | 3.0  | $225/hr     | $108,000      |
+| Business Analyst        | Senior     | 1.5  | $168/hr     | $40,320       |
+| QA Lead                 | Senior     | 1.0  | $158/hr     | $25,280       |
+| Scrum Master            | Senior     | 0.5  | $172/hr     | $13,760       |
+
+Billing is based on 160 hours per FTE per calendar month.
+All rates are fixed for the duration of the contract and are not subject to annual adjustment.
+
+2.2 Key Deliverables
+- Enterprise Data Architecture Blueprint and Technical Design Document
+- Cloud-native data lakehouse implementation on AWS (S3, Glue, Redshift Serverless)
+- Data ingestion pipelines for 24 source systems
+- Data governance framework and data catalogue
+- Executive dashboard and self-service BI layer
+- Knowledge transfer and runbook documentation
+- Hypercare support (30 days post go-live)
+
+3. PAYMENT TERMS
+
+3.1 Invoicing Schedule: Vendor shall submit invoices on a monthly basis by the 5th business day of the following month.
+3.2 Payment Due Date: All invoices are payable within Net 45 days of receipt by the Client's Accounts Payable department.
+3.3 Payment Basis: All billing is strictly time-and-materials. No milestone-based payment structure applies.
+3.4 Late Payment Penalty: Outstanding invoices beyond the Net 45 period shall accrue interest at a rate of 2% per month compounded monthly.
+3.5 Expense Reimbursement: Pre-approved travel and accommodation expenses shall be reimbursed at cost within 30 days.
+
+4. TERM AND TERMINATION
+
+4.1 This SOW shall commence on the Effective Date and continue for a period of twelve (12) calendar months.
+4.2 Either party may terminate this agreement upon provision of ninety (90) days prior written notice.
+4.3 In the event of termination by the Client without cause, the Client shall pay all fees and expenses incurred up to the effective date of termination.
+
+5. INTELLECTUAL PROPERTY
+
+5.1 All work product, deliverables, source code, scripts, data models, architecture documents, and any other materials created by Vendor personnel in connection with this SOW shall become the exclusive property of the Client upon receipt of full payment for the relevant invoice period.
+5.2 Vendor retains the right to use general methodologies, frameworks, and know-how developed independently of this engagement.
+
+6. LIABILITY
+
+6.1 Vendor's total liability under this agreement shall be unlimited and shall cover all direct, indirect, consequential, and incidental damages arising from any breach of this agreement, negligence, or failure to perform.
+6.2 Client's indemnification obligations shall include all third-party claims arising from Client's misuse of Vendor deliverables.
+
+7. CONFIDENTIALITY
+Each party agrees to maintain the confidentiality of the other party's proprietary information for a period of five (5) years following the termination of this agreement.
+
+8. GOVERNING LAW
+This agreement shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of law provisions.
+
+9. ENTIRE AGREEMENT
+This SOW, together with the Master Services Agreement dated January 15, 2026, constitutes the entire agreement between the parties with respect to the subject matter hereof.
+
+Signed:
+
+TechCorp Financial Services Inc.          Apex Consulting Group LLC
+_____________________________            _____________________________
+Authorized Signatory                      Authorized Signatory
+Date: _______________                     Date: _______________

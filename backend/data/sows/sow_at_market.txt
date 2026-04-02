@@ -1,0 +1,81 @@
+STATEMENT OF WORK
+Professional Services Agreement
+
+Contract Reference: SOW-2026-002
+Client: RetailNow Corporation
+Vendor: Vertex Solutions Ltd.
+Effective Date: June 1, 2026
+Contract Duration: 8 months
+Total Estimated Value: $1,820,000
+
+1. PROJECT OVERVIEW
+RetailNow Corporation ("Client") engages Vertex Solutions Ltd. ("Vendor") to deliver an Agile Delivery Enablement programme covering the transformation of the Client's e-commerce platform to a microservices architecture. Vertex Solutions will embed a cross-functional team to design, develop, and validate the platform components.
+
+2. SCOPE OF SERVICES
+
+2.1 Resource Roles and Billing Rates
+
+| Role                    | Level      | FTE  | Hourly Rate | Monthly Est.  |
+|------------------------|------------|------|-------------|---------------|
+| Project Manager         | Senior     | 1.0  | $145/hr     | $23,200       |
+| Solution Architect      | Senior     | 1.0  | $205/hr     | $32,800       |
+| Senior Data Engineer    | Senior     | 2.0  | $175/hr     | $56,000       |
+| Business Analyst        | Mid        | 1.0  | $125/hr     | $20,000       |
+| QA Lead                 | Senior     | 1.0  | $120/hr     | $19,200       |
+| Scrum Master            | Senior     | 0.5  | $130/hr     | $10,400       |
+
+Billing is based on 160 hours per FTE per calendar month.
+Annual rate escalation of CPI (capped at 3%) applies from month 7 onward.
+
+2.2 Key Deliverables
+- Microservices architecture design and API contract specifications
+- Decomposed e-commerce modules: product catalogue, cart, checkout, orders
+- CI/CD pipeline setup (GitHub Actions + ArgoCD)
+- Test automation suite covering 85% code coverage
+- Performance baseline and load testing results
+- Operational runbooks and handover documentation
+
+3. PAYMENT TERMS
+
+3.1 Invoicing Schedule: Vendor shall submit invoices on a monthly basis by the last business day of each month.
+3.2 Payment Due Date: All invoices are payable within Net 30 days of receipt.
+3.3 Payment Basis: Time-and-materials for months 1 through 6; fixed-fee milestone payments for months 7 and 8 as defined in Schedule A.
+3.4 Late Payment: No interest shall accrue on invoices paid within 45 days of the due date. Beyond 45 days, interest accrues at 1% per month.
+3.5 Disputed Invoices: Any disputed portion of an invoice shall be flagged within 10 business days; undisputed amounts remain payable.
+
+4. TERM AND TERMINATION
+
+4.1 This SOW shall commence on the Effective Date and continue for eight (8) calendar months.
+4.2 Client may terminate this agreement for convenience upon thirty (30) days written notice.
+4.3 Vendor may terminate upon sixty (60) days written notice if the Client fails to cure a material breach within fifteen (15) days of notice.
+4.4 Upon termination, Client shall pay all fees earned through the termination date.
+
+5. INTELLECTUAL PROPERTY
+
+5.1 All custom work product and deliverables created specifically for this engagement shall be owned by the Client upon full payment.
+5.2 Vendor retains ownership of its pre-existing tools, frameworks, and accelerators used in delivery.
+5.3 Vendor grants Client a perpetual, royalty-free licence to use any Vendor tools embedded in deliverables.
+
+6. LIABILITY
+
+6.1 Each party's liability to the other is limited to the total fees paid or payable in the twelve (12) months immediately preceding the event giving rise to the claim.
+6.2 Neither party shall be liable for indirect, incidental, or consequential damages.
+6.3 The liability cap shall not apply to breaches of confidentiality, gross negligence, or wilful misconduct.
+
+7. SLA AND PERFORMANCE
+
+7.1 Vendor guarantees a minimum of 95% resource availability (excluding agreed leave and public holidays).
+7.2 In the event of resource unavailability below 95% for two consecutive months, Client may request a rate reduction of 5% for that period.
+
+8. GOVERNING LAW
+This agreement is governed by the laws of the State of Delaware.
+
+9. ENTIRE AGREEMENT
+This SOW constitutes the entire agreement with respect to the subject matter hereof and supersedes all prior discussions.
+
+Signed:
+
+RetailNow Corporation                     Vertex Solutions Ltd.
+_____________________________            _____________________________
+Authorized Signatory                      Authorized Signatory
+Date: _______________                     Date: _______________
