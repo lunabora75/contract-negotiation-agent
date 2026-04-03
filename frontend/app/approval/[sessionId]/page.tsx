@@ -187,7 +187,7 @@ export default function ApprovalPage() {
               {summary?.chat.length} messages
             </span>
           </div>
-          <div className="divide-y overflow-y-auto max-h-[480px]" style={{ divideColor: "#DBDBDB" }}>
+          <div className="divide-y divide-gray-200 overflow-y-auto max-h-[480px]">
             {summary?.chat.map((msg, i) => (
               <div key={i} className="px-5 py-4" style={{ background: msg.role === "agent" ? "#FFFFFF" : "#FAFAFA" }}>
                 <div className="flex items-center gap-2 mb-2">
