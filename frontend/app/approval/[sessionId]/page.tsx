@@ -70,7 +70,25 @@ export default function ApprovalPage() {
         body:    JSON.stringify({ decision, comments, approver }),
       });
       if (!res.ok) throw new Error("Failed to submit");
+
+      // Notify the parent window (main page) so it can update history + reset
+      if (window.opener) {
+        window.opener.postMessage({
+          type:       "negotiation_decision",
+          session_id: sessionId,
+          filename:   summary?.filename ?? "",
+          decision,
+          comments,
+        }, "*");
+      }
+
       setSubmitted(true);
+
+      // Close this window after a short delay to show confirmation
+      setTimeout(() => {
+        try { window.close(); } catch { /* ignore if blocked */ }
+      }, 2500);
+
     } catch (e) {
       alert(e instanceof Error ? e.message : "Submission failed");
     } finally {
@@ -107,7 +125,7 @@ export default function ApprovalPage() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#F4F4F4" }}>
       <div className="text-center p-10 rounded-xl max-w-md" style={{ background: "#FFFFFF", border: "1px solid #DBDBDB", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
         <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto mb-5"
-          style={{ background: decision === "approved" ? "#FFF8F0" : "#FFF4F4", border: `2px solid ${decision === "approved" ? "#F89738" : "#DBDBDB"}` }}>
+          style={{ background: decision === "approved" ? "#FFF8F0" : "#F4F4F4", border: `2px solid ${decision === "approved" ? "#F89738" : "#DBDBDB"}` }}>
           {decision === "approved" ? "✓" : "✕"}
         </div>
         <h2 className="font-heading font-bold text-xl mb-2"
@@ -116,7 +134,7 @@ export default function ApprovalPage() {
         </h2>
         <p className="text-sm mb-1" style={{ color: "#8B8B8B", fontFamily: "'Montserrat', sans-serif" }}>
           {decision === "approved"
-            ? "The negotiated terms have been approved. The vendor will be notified."
+            ? "The negotiated terms have been approved and saved."
             : "The negotiated terms have been rejected. The agent will use your feedback to improve."}
         </p>
         {comments && (
@@ -124,6 +142,9 @@ export default function ApprovalPage() {
             "{comments}"
           </p>
         )}
+        <p className="text-xs mt-4" style={{ color: "#BBBBBB", fontFamily: "'Montserrat', sans-serif" }}>
+          This window will close automatically…
+        </p>
       </div>
     </div>
   );

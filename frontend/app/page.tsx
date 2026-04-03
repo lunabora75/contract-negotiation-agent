@@ -12,6 +12,15 @@ interface FeedbackForm {
   rating: number; outcome: string;
   what_worked: string; what_didnt: string; notes: string;
 }
+interface HistoryEntry {
+  session_id: string;
+  filename:   string;
+  created_at: string;
+  decision:   "approved" | "rejected" | "pending";
+  comments:   string;
+}
+
+const HISTORY_KEY = "mr_negotiation_history";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 const fmtBytes = (n: number) =>
@@ -20,48 +29,7 @@ const fmtBytes = (n: number) =>
 const fileExt = (name: string) => name.split(".").pop()?.toLowerCase() ?? "";
 
 
-// ── Markdown-lite renderer ─────────────────────────────────────────────────
-function MdContent({ text }: { text: string }) {
-  return (
-    <div className="space-y-1.5">
-      {text.split("\n").map((line, i) => {
-        if (!line.trim()) return <div key={i} className="h-1" />;
-
-        if (/^#{2,3}\s/.test(line))
-          return (
-            <p key={i} className="font-heading text-sm font-bold mt-3 mb-0.5" style={{ color: "#09131b" }}>
-              {line.replace(/^#+\s/, "")}
-            </p>
-          );
-
-        if (/^\|.+\|$/.test(line.trim()) && !line.includes("---"))
-          return (
-            <p key={i} className="text-xs font-body font-mono leading-relaxed" style={{ color: "#8B8B8B" }}>
-              {line}
-            </p>
-          );
-        if (/^\|[\s-|]+\|$/.test(line.trim())) return null;
-
-        if (/^[\s]*[-•▸]/.test(line))
-          return (
-            <div key={i} className="flex gap-2 text-sm">
-              <span className="shrink-0 mt-0.5 text-xs" style={{ color: "#F89738" }}>▸</span>
-              <span className="leading-relaxed font-body" style={{ color: "#09131b" }}>
-                {renderInline(line.replace(/^[\s]*[-•▸]\s*/, ""))}
-              </span>
-            </div>
-          );
-
-        return (
-          <p key={i} className="text-sm leading-relaxed font-body" style={{ color: "#09131b" }}>
-            {renderInline(line)}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
-
+// ── Inline renderer (bold, code) ───────────────────────────────────────────
 function renderInline(text: string) {
   return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((seg, i) => {
     if (seg.startsWith("**") && seg.endsWith("**"))
@@ -75,6 +43,101 @@ function renderInline(text: string) {
       );
     return <span key={i}>{seg}</span>;
   });
+}
+
+// ── Table renderer ─────────────────────────────────────────────────────────
+function MdTable({ lines }: { lines: string[] }) {
+  const dataLines = lines.filter(l => !/^\|[\s:|-]+\|$/.test(l.trim()));
+  const rows = dataLines.map(l =>
+    l.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim())
+  );
+  if (rows.length === 0) return null;
+  const [headers, ...bodyRows] = rows;
+  return (
+    <div className="overflow-x-auto my-2 rounded-lg" style={{ border: "1px solid #DBDBDB" }}>
+      <table className="w-full text-xs border-collapse">
+        <thead>
+          <tr style={{ background: "#FFF8F0" }}>
+            {headers.map((h, i) => (
+              <th key={i} className="px-3 py-2 text-left font-semibold whitespace-nowrap"
+                style={{ color: "#09131b", borderBottom: "2px solid #F89738", fontFamily: "'Montserrat', sans-serif" }}>
+                {renderInline(h)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {bodyRows.map((row, ri) => (
+            <tr key={ri} style={{ background: ri % 2 === 0 ? "#FFFFFF" : "#FAFAFA" }}>
+              {row.map((cell, ci) => (
+                <td key={ci} className="px-3 py-2 whitespace-nowrap"
+                  style={{ color: "#09131b", borderBottom: "1px solid #F4F4F4", fontFamily: "'Montserrat', sans-serif" }}>
+                  {renderInline(cell)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ── Full Markdown renderer (tables, headings, bullets, inline) ─────────────
+function MdContent({ text }: { text: string }) {
+  // Group lines into blocks: table blocks vs individual lines
+  type Block = { type: "table"; lines: string[] } | { type: "line"; content: string };
+  const blocks: Block[] = [];
+  const rawLines = text.split("\n");
+  let i = 0;
+  while (i < rawLines.length) {
+    const line = rawLines[i];
+    if (/^\|.+\|/.test(line.trim())) {
+      const tableLines: string[] = [];
+      while (i < rawLines.length && /^\|.+\|/.test(rawLines[i].trim())) {
+        tableLines.push(rawLines[i]);
+        i++;
+      }
+      blocks.push({ type: "table", lines: tableLines });
+    } else {
+      blocks.push({ type: "line", content: line });
+      i++;
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      {blocks.map((block, bi) => {
+        if (block.type === "table") return <MdTable key={bi} lines={block.lines} />;
+
+        const line = block.content;
+        if (!line.trim()) return <div key={bi} className="h-1" />;
+
+        if (/^#{2,3}\s/.test(line))
+          return (
+            <p key={bi} className="font-heading text-sm font-bold mt-3 mb-1" style={{ color: "#09131b" }}>
+              {line.replace(/^#+\s/, "")}
+            </p>
+          );
+
+        if (/^[\s]*[-•▸]/.test(line))
+          return (
+            <div key={bi} className="flex gap-2 text-sm">
+              <span className="shrink-0 mt-0.5 text-xs" style={{ color: "#F89738" }}>▸</span>
+              <span className="leading-relaxed font-body" style={{ color: "#09131b" }}>
+                {renderInline(line.replace(/^[\s]*[-•▸]\s*/, ""))}
+              </span>
+            </div>
+          );
+
+        return (
+          <p key={bi} className="text-sm leading-relaxed font-body" style={{ color: "#09131b" }}>
+            {renderInline(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 // ── Chat bubble ────────────────────────────────────────────────────────────
@@ -318,10 +381,57 @@ export default function Home() {
   const [showFeedback,    setShowFeedback]    = useState(false);
   const [feedbackDone,    setFeedbackDone]    = useState(false);
   const [negotiationDone, setNegotiationDone] = useState(false);
-  const [online, setOnline]             = useState<boolean | null>(null);
+  const [history,         setHistory]         = useState<HistoryEntry[]>([]);
+  const [showHistory,     setShowHistory]     = useState(false);
+  const [online,          setOnline]          = useState<boolean | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(HISTORY_KEY);
+      if (stored) setHistory(JSON.parse(stored));
+    } catch { /* ignore */ }
+  }, []);
+
+  // Reset session for next SOW
+  const resetSession = useCallback(() => {
+    setFile(null);
+    setSessionId(null);
+    setFilename("");
+    setMessages([]);
+    setInput("");
+    setLoading(false);
+    setAnalysing(false);
+    setShowFeedback(false);
+    setFeedbackDone(false);
+    setNegotiationDone(false);
+  }, []);
+
+  // Listen for approval decision posted from the approval popup window
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type !== "negotiation_decision") return;
+      const { session_id, filename: fn, decision, comments } = event.data;
+      const entry: HistoryEntry = {
+        session_id,
+        filename:   fn,
+        created_at: new Date().toISOString(),
+        decision,
+        comments:   comments || "",
+      };
+      setHistory(prev => {
+        const updated = [entry, ...prev.filter(h => h.session_id !== session_id)];
+        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+        return updated;
+      });
+      resetSession();
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [resetSession]);
 
   useEffect(() => {
     fetch(`${API}/api/health`)
@@ -517,6 +627,51 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          {/* History panel */}
+          {history.length > 0 && (
+            <div style={{ borderTop: "1px solid #DBDBDB" }}>
+              <button
+                onClick={() => setShowHistory(h => !h)}
+                className="w-full px-5 py-3 flex items-center justify-between text-left"
+                style={{ background: "#FAFAFA" }}
+              >
+                <span className="text-[10px] font-body uppercase tracking-widest" style={{ color: "#8B8B8B" }}>
+                  History ({history.length})
+                </span>
+                <span className="text-xs" style={{ color: "#BBBBBB" }}>{showHistory ? "▲" : "▼"}</span>
+              </button>
+              {showHistory && (
+                <div className="overflow-y-auto max-h-48 divide-y divide-gray-100">
+                  {history.map(h => (
+                    <div key={h.session_id} className="px-5 py-3 flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate font-body" style={{ color: "#09131b" }}>{h.filename}</p>
+                        <p className="text-[10px] mt-0.5 font-body" style={{ color: "#BBBBBB" }}>
+                          {new Date(h.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold font-body"
+                          style={{
+                            background: h.decision === "approved" ? "#FFF8F0" : h.decision === "rejected" ? "#FFF4F4" : "#F4F4F4",
+                            color:      h.decision === "approved" ? "#F89738" : h.decision === "rejected" ? "#8B8B8B" : "#BBBBBB",
+                            border:     `1px solid ${h.decision === "approved" ? "#FDDCB0" : "#DBDBDB"}`,
+                          }}>
+                          {h.decision === "approved" ? "✓ Approved" : h.decision === "rejected" ? "✕ Rejected" : "Pending"}
+                        </span>
+                        <button
+                          onClick={() => window.open(`/approval/${h.session_id}`, "_blank")}
+                          className="text-[10px] font-body underline"
+                          style={{ color: "#BBBBBB" }}
+                        >View</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Footer */}
           <div className="p-4" style={{ borderTop: "1px solid #DBDBDB" }}>
