@@ -141,7 +141,6 @@ export default function ManagerPage() {
   const filtered = filter === "all" ? sessions : sessions.filter(s => s.status === filter);
 
   const pendingApprovals = sessions.filter(s => s.status === "pending_approval");
-  const history          = sessions.filter(s => s.status === "approved" || s.status === "rejected");
 
   const statusCounts = sessions.reduce<Record<string, number>>((acc, s) => {
     acc[s.status] = (acc[s.status] || 0) + 1;
@@ -355,9 +354,9 @@ export default function ManagerPage() {
                             <button
                               onClick={() => trigger(s.session_id)}
                               disabled={triggeringId === s.session_id}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
                               style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY, opacity: triggeringId === s.session_id ? 0.6 : 1 }}>
-                              {triggeringId === s.session_id ? "Sending…" : "Send for Negotiation →"}
+                              {triggeringId === s.session_id ? "Sending…" : "Send to AI Agent to Negotiate →"}
                             </button>
                           )}
                           {s.status === "sent_for_negotiation" && (
@@ -392,52 +391,13 @@ export default function ManagerPage() {
           </div>
         </section>
 
-        {/* ── History ──────────────────────────────────────────────────── */}
-        {history.length > 0 && (
-          <section>
-            <h2 className="font-bold text-lg mb-4" style={{ color: C.dark, fontFamily: FONT_HEAD }}>History</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {history.map(s => {
-                const approved = s.status === "approved";
-                return (
-                  <div key={s.session_id} className="rounded-xl p-4 cursor-pointer transition-all hover:shadow-md"
-                    style={{ background: C.white, border: `1px solid ${C.border}` }}
-                    onClick={() => router.push(`/approval/${s.session_id}`)}>
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <span className="text-lg">📄</span>
-                      <StatusBadge status={s.status} />
-                    </div>
-                    <p className="font-semibold text-sm truncate mb-1" style={{ color: C.dark }}>{s.filename}</p>
-                    <p className="text-xs" style={{ color: C.gray }}>{fmtDate(s.created_at)}</p>
-                    {s.approval?.comments && (
-                      <p className="text-xs mt-2 p-2 rounded-lg truncate"
-                        style={{ background: C.light, color: C.gray }}>
-                        "{s.approval.comments}"
-                      </p>
-                    )}
-                    {s.approval?.approver && (
-                      <p className="text-[10px] mt-1" style={{ color: C.gray }}>
-                        By {s.approval.approver}
-                      </p>
-                    )}
-                    {approved && (
-                      <p className="text-[10px] mt-2 font-semibold" style={{ color: "#16A34A" }}>
-                        ✓ Terms finalised
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────── */}
       <footer className="mt-12" style={{ background: C.dark, borderTop: "1px solid #1a2733" }}>
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <span className="font-bold text-sm" style={{ color: C.white, fontFamily: FONT_HEAD }}>MResult</span>
-          <span className="text-xs" style={{ color: "#4a6070" }}>Category Manager Portal · Powered by Claude Sonnet</span>
+          <span className="text-xs" style={{ color: "#4a6070" }}>AI Powered Contract Negotiation</span>
         </div>
       </footer>
     </div>

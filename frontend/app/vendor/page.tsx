@@ -343,7 +343,7 @@ export default function VendorPage() {
         <>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+            <div className="max-w-5xl mx-auto px-6 py-6 space-y-5">
 
               {/* Opening context pill */}
               <div className="text-center">
@@ -377,7 +377,7 @@ export default function VendorPage() {
 
           {/* ── Input bar ──────────────────────────────────────────────── */}
           <div style={{ flexShrink: 0, background: C.white, borderTop: `1px solid ${C.border}` }}>
-            <div className="max-w-3xl mx-auto px-4 py-4">
+            <div className="max-w-5xl mx-auto px-6 py-4">
               {negotiationDone ? (
                 <p className="text-center text-sm py-2" style={{ color: C.gray }}>
                   This negotiation is complete. The Category Manager is reviewing the agreed terms.
@@ -415,7 +415,7 @@ export default function VendorPage() {
                 </div>
               )}
               <p className="text-[10px] text-center mt-2" style={{ color: C.border }}>
-                Powered by Claude Sonnet · All negotiations are recorded for audit purposes
+                AI Powered Contract Negotiation · All negotiations are recorded for audit purposes
               </p>
             </div>
           </div>
