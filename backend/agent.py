@@ -27,7 +27,7 @@ def _get_client() -> anthropic.Anthropic:
         _client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     return _client
 
-MODEL = os.getenv("MODEL", "claude-sonnet-4-6")
+MODEL = os.getenv("MODEL", "claude-sonnet-4-5")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TOOL SCHEMAS

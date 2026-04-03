@@ -3,28 +3,30 @@
 @tailwind utilities;
 
 /* ─────────────────────────────────────────────────────────────
-   MResult Brand Design System — Light Theme
-   Colors sourced directly from https://www.mresult.com
+   MResult Brand Design System — Official Brand Guidelines v4
+   Primary:   #F89738 (orange)  |  Text: #09131b
+   Fonts:     Raleway Bold (headings) · Montserrat (body)
+   Backgrounds: #FFFFFF (white) and #F4F4F4 (light gray) only
    ───────────────────────────────────────────────────────────── */
 
 :root {
-  /* Core palette — from mresult.com CSS variables */
-  --mr-dark:    #121C27;   /* --e-global-color-primary   */
-  --mr-darker:  #0A1119;   /* --e-global-color-secondary */
-  --mr-navy:    #001E38;   /* deep navy used in sections */
-  --mr-green:   #61CE70;   /* --e-global-color-accent    */
-  --mr-orange:  #F89738;   /* logo orange / button hover */
-  --mr-text:    #4B535D;   /* body text                  */
-  --mr-border:  #D3D5D6;   /* border color               */
-  --mr-bg:      #F4F6F8;   /* page background            */
-  --mr-surface: #FFFFFF;   /* card / panel surface       */
+  /* MResult official brand palette */
+  --mr-orange:   #F89738;   /* primary brand orange           */
+  --mr-orange-h: #e07e20;   /* orange hover                   */
+  --mr-black:    #000000;   /* logo black                     */
+  --mr-gray:     #8B8B8B;   /* logo gray / secondary text     */
+  --mr-gray-md:  #BBBBBB;   /* mid gray                       */
+  --mr-gray-lt:  #DBDBDB;   /* light gray borders             */
+  --mr-bg:       #F4F4F4;   /* page background                */
+  --mr-surface:  #FFFFFF;   /* card / panel surface           */
+  --mr-text:     #09131b;   /* all body text                  */
+  --mr-text-sub: #8B8B8B;   /* subtext / labels               */
 
-  /* Typography — mresult.com font stack */
-  --font-heading: 'Mukta Vaani', 'Biryani', sans-serif;
-  --font-body:    'Josefin Sans', 'Biryani', sans-serif;
+  /* Typography */
+  --font-heading: 'Raleway', sans-serif;
+  --font-body:    'Montserrat', sans-serif;
 }
 
-/* ── reset / base ────────────────────────────────────────────── */
 html {
   color-scheme: light;
   scroll-behavior: smooth;
@@ -32,41 +34,43 @@ html {
 
 body {
   background-color: var(--mr-bg);
-  color: var(--mr-dark);
+  color: var(--mr-text);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
 }
 
-/* ── headings use Mukta Vaani (mresult primary font) ─────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--mr-text);
 }
 
 /* ── scrollbar ───────────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track  { background: var(--mr-bg); }
-::-webkit-scrollbar-thumb  { background: #C8CDD2; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #A0A8B0; }
+::-webkit-scrollbar-thumb  { background: var(--mr-gray-lt); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--mr-gray-md); }
 
 /* ── text selection ──────────────────────────────────────────── */
 ::selection {
-  background: rgba(97, 206, 112, 0.25);
-  color: var(--mr-dark);
+  background: rgba(248, 151, 56, 0.2);
+  color: var(--mr-text);
 }
 
 /* ── focus ring ──────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid rgba(97, 206, 112, 0.55);
+  outline: 2px solid rgba(248, 151, 56, 0.5);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* ── Tailwind font-family utilities ──────────────────────────── */
-.font-heading { font-family: var(--font-heading); font-weight: 600; }
+/* ── font utility classes ────────────────────────────────────── */
+.font-heading { font-family: var(--font-heading); font-weight: 700; }
 .font-body    { font-family: var(--font-body); }
+.font-semibold-body { font-family: var(--font-body); font-weight: 600; }
 
 /* ── Animated typing dots ────────────────────────────────────── */
 @keyframes typing-bounce {
@@ -77,27 +81,20 @@ h1, h2, h3, h4, h5, h6 {
   animation: typing-bounce 1.3s ease-in-out infinite;
 }
 
-/* ── Primary CTA button ──────────────────────────────────────── */
+/* ── Orange accent button ────────────────────────────────────── */
 .btn-mr-primary {
-  background: var(--mr-green);
-  color: var(--mr-darker);
+  background: var(--mr-orange);
+  color: #ffffff;
   font-family: var(--font-body);
   font-weight: 600;
-  letter-spacing: 0.025em;
   transition: background 0.15s ease, transform 0.1s ease;
 }
-.btn-mr-primary:hover  { background: #4db85e; }
+.btn-mr-primary:hover  { background: var(--mr-orange-h); }
 .btn-mr-primary:active { transform: scale(0.98); }
 
 /* ── Card surface ────────────────────────────────────────────── */
 .mr-card {
   background: var(--mr-surface);
-  border: 1px solid var(--mr-border);
-  border-radius: 12px;
-}
-
-/* ── Green accent border ─────────────────────────────────────── */
-.mr-selected {
-  border-color: rgba(97, 206, 112, 0.5);
-  box-shadow: 0 0 0 1px rgba(97, 206, 112, 0.2);
+  border: 1px solid var(--mr-gray-lt);
+  border-radius: 8px;
 }

@@ -92,7 +92,7 @@ class FeedbackRequest(BaseModel):
 # ── routes ────────────────────────────────────────────────────────────────
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "model": os.getenv("MODEL", "claude-opus-4-5")}
+    return {"status": "ok", "model": os.getenv("MODEL", "claude-sonnet-4-5")}
 
 
 @app.post("/api/sessions")
