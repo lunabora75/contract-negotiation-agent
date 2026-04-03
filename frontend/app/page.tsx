@@ -1,841 +1,260 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
-const API    = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const MAX_MB = 10;
-const ACCEPT = ".pdf,.docx,.txt";
+// ── Brand colours ────────────────────────────────────────────────────────
+const C = {
+  dark:   "#09131b",
+  orange: "#F89738",
+  gray:   "#8B8B8B",
+  light:  "#F4F4F4",
+  border: "#DBDBDB",
+  white:  "#FFFFFF",
+  orangeBg: "#FFF8F0",
+  orangeBorder: "#FDDCB0",
+};
 
-// ── types ──────────────────────────────────────────────────────────────────
-interface ChatMessage { role: "agent" | "user"; content: string; }
-interface FeedbackForm {
-  rating: number; outcome: string;
-  what_worked: string; what_didnt: string; notes: string;
-}
-interface HistoryEntry {
-  session_id: string;
-  filename:   string;
-  created_at: string;
-  decision:   "approved" | "rejected" | "pending";
-  comments:   string;
-}
+const FONT_HEAD = "'Raleway', sans-serif";
+const FONT_BODY = "'Montserrat', sans-serif";
 
-const HISTORY_KEY = "mr_negotiation_history";
+// ── How it works steps ───────────────────────────────────────────────────
+const STEPS = [
+  {
+    n: "01", icon: "📤",
+    title: "Upload SOW",
+    desc:  "Category Manager uploads the professional services Statement of Work (PDF, DOCX or TXT).",
+  },
+  {
+    n: "02", icon: "🔍",
+    title: "AI Analysis",
+    desc:  "The agent extracts roles, rates and payment terms from the contract automatically.",
+  },
+  {
+    n: "03", icon: "📊",
+    title: "Benchmark",
+    desc:  "Every rate is benchmarked against market percentiles (P25 – P90) to identify savings opportunities.",
+  },
+  {
+    n: "04", icon: "🤝",
+    title: "Negotiate",
+    desc:  "The agent negotiates directly with the Vendor, targeting the market median and conceding up to P75.",
+  },
+  {
+    n: "05", icon: "✅",
+    title: "Approve",
+    desc:  "Agreed terms are sent to the Category Manager for final approval or rejection with learning feedback.",
+  },
+];
 
-// ── helpers ────────────────────────────────────────────────────────────────
-const fmtBytes = (n: number) =>
-  n < 1024 ? `${n} B` : n < 1024 ** 2 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 ** 2).toFixed(1)} MB`;
+// ── Benchmark criteria ───────────────────────────────────────────────────
+const BENCHMARKS = [
+  {
+    label: "P25",
+    subtitle: "Entry / Budget",
+    color: "#4A90D9",
+    bg: "#F0F6FF",
+    border: "#C3D9F5",
+    desc: "Only 25% of the market charges this rate or less. Typically entry-level or budget vendors. A rate here signals below-market pricing.",
+    usage: "Reference only — not a negotiation target.",
+  },
+  {
+    label: "P50",
+    subtitle: "Market Median",
+    color: "#16A34A",
+    bg: "#F0FDF4",
+    border: "#BBF7D0",
+    desc: "Exactly half the market is at or below this rate. This is the true market median and the fairest benchmark for standard roles.",
+    usage: "Agent's opening counter-offer target.",
+  },
+  {
+    label: "P75",
+    subtitle: "Experienced Range",
+    color: C.orange,
+    bg: C.orangeBg,
+    border: C.orangeBorder,
+    desc: "75% of the market charges this or less. Represents an experienced or senior professional. Paying above P75 puts you in the top-cost quartile.",
+    usage: "Agent's walk-away limit — max acceptable rate.",
+  },
+  {
+    label: "P90",
+    subtitle: "Premium / Specialist",
+    color: "#DC2626",
+    bg: "#FFF4F4",
+    border: "#FECACA",
+    desc: "Only 10% of the market charges more. Reserved for rare niche specialists or highly sought-after skills.",
+    usage: "Flag for review — requires strong justification.",
+  },
+];
 
-const fileExt = (name: string) => name.split(".").pop()?.toLowerCase() ?? "";
-
-
-// ── Inline renderer (bold, code) ───────────────────────────────────────────
-function renderInline(text: string) {
-  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((seg, i) => {
-    if (seg.startsWith("**") && seg.endsWith("**"))
-      return <strong key={i} className="font-semibold" style={{ color: "#09131b" }}>{seg.slice(2, -2)}</strong>;
-    if (seg.startsWith("`") && seg.endsWith("`"))
-      return (
-        <code key={i} className="font-mono text-xs px-1 py-0.5 rounded"
-          style={{ color: "#F89738", background: "#FFF4E5", border: "1px solid #FDDCB0" }}>
-          {seg.slice(1, -1)}
-        </code>
-      );
-    return <span key={i}>{seg}</span>;
-  });
-}
-
-// ── Table renderer ─────────────────────────────────────────────────────────
-function MdTable({ lines }: { lines: string[] }) {
-  const dataLines = lines.filter(l => !/^\|[\s:|-]+\|$/.test(l.trim()));
-  const rows = dataLines.map(l =>
-    l.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim())
-  );
-  if (rows.length === 0) return null;
-  const [headers, ...bodyRows] = rows;
-  return (
-    <div className="overflow-x-auto my-2 rounded-lg" style={{ border: "1px solid #DBDBDB" }}>
-      <table className="w-full text-xs border-collapse">
-        <thead>
-          <tr style={{ background: "#FFF8F0" }}>
-            {headers.map((h, i) => (
-              <th key={i} className="px-3 py-2 text-left font-semibold whitespace-nowrap"
-                style={{ color: "#09131b", borderBottom: "2px solid #F89738", fontFamily: "'Montserrat', sans-serif" }}>
-                {renderInline(h)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {bodyRows.map((row, ri) => (
-            <tr key={ri} style={{ background: ri % 2 === 0 ? "#FFFFFF" : "#FAFAFA" }}>
-              {row.map((cell, ci) => (
-                <td key={ci} className="px-3 py-2 whitespace-nowrap"
-                  style={{ color: "#09131b", borderBottom: "1px solid #F4F4F4", fontFamily: "'Montserrat', sans-serif" }}>
-                  {renderInline(cell)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// ── Full Markdown renderer (tables, headings, bullets, inline) ─────────────
-function MdContent({ text }: { text: string }) {
-  // Group lines into blocks: table blocks vs individual lines
-  type Block = { type: "table"; lines: string[] } | { type: "line"; content: string };
-  const blocks: Block[] = [];
-  const rawLines = text.split("\n");
-  let i = 0;
-  while (i < rawLines.length) {
-    const line = rawLines[i];
-    if (/^\|.+\|/.test(line.trim())) {
-      const tableLines: string[] = [];
-      while (i < rawLines.length && /^\|.+\|/.test(rawLines[i].trim())) {
-        tableLines.push(rawLines[i]);
-        i++;
-      }
-      blocks.push({ type: "table", lines: tableLines });
-    } else {
-      blocks.push({ type: "line", content: line });
-      i++;
-    }
-  }
+export default function LandingPage() {
+  const router = useRouter();
 
   return (
-    <div className="space-y-1">
-      {blocks.map((block, bi) => {
-        if (block.type === "table") return <MdTable key={bi} lines={block.lines} />;
+    <div style={{ minHeight: "100vh", background: C.light, fontFamily: FONT_BODY }}>
 
-        const line = block.content;
-        if (!line.trim()) return <div key={bi} className="h-1" />;
-
-        if (/^#{2,3}\s/.test(line))
-          return (
-            <p key={bi} className="font-heading text-sm font-bold mt-3 mb-1" style={{ color: "#09131b" }}>
-              {line.replace(/^#+\s/, "")}
-            </p>
-          );
-
-        if (/^[\s]*[-•▸]/.test(line))
-          return (
-            <div key={bi} className="flex gap-2 text-sm">
-              <span className="shrink-0 mt-0.5 text-xs" style={{ color: "#F89738" }}>▸</span>
-              <span className="leading-relaxed font-body" style={{ color: "#09131b" }}>
-                {renderInline(line.replace(/^[\s]*[-•▸]\s*/, ""))}
-              </span>
-            </div>
-          );
-
-        return (
-          <p key={bi} className="text-sm leading-relaxed font-body" style={{ color: "#09131b" }}>
-            {renderInline(line)}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── Chat bubble ────────────────────────────────────────────────────────────
-function ChatBubble({ msg }: { msg: ChatMessage }) {
-  const isAgent = msg.role === "agent";
-  return (
-    <div className={`flex gap-3 ${isAgent ? "" : "flex-row-reverse"}`}>
-      {/* Avatar */}
-      <div
-        className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-heading font-bold select-none"
-        style={{
-          background: isAgent ? "#F89738" : "#09131b",
-          color: "#ffffff",
-        }}
-      >
-        {isAgent ? "AI" : "You"}
-      </div>
-      {/* Bubble */}
-      <div
-        className="max-w-[80%] rounded-2xl px-4 py-3"
-        style={{
-          background: isAgent ? "#FFFFFF" : "#FFF4E5",
-          border: isAgent ? "1px solid #DBDBDB" : "1px solid #FDDCB0",
-          borderTopLeftRadius: isAgent ? "4px" : undefined,
-          borderTopRightRadius: !isAgent ? "4px" : undefined,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-        }}
-      >
-        <MdContent text={msg.content} />
-      </div>
-    </div>
-  );
-}
-
-// ── Upload zone ────────────────────────────────────────────────────────────
-function UploadZone({ file, onFile }: { file: File | null; onFile: (f: File | null) => void }) {
-  const [dragging, setDragging] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const validate = (f: File): string | null => {
-    if (!["pdf", "docx", "txt"].includes(fileExt(f.name)))
-      return "Please upload a PDF, DOCX or TXT file.";
-    if (f.size > MAX_MB * 1024 ** 2) return `Maximum file size is ${MAX_MB} MB.`;
-    return null;
-  };
-
-  const handle = (f: File) => {
-    const err = validate(f);
-    if (err) { alert(err); return; }
-    onFile(f);
-  };
-
-  if (file) {
-    return (
-      <div className="rounded-lg p-4 flex items-center gap-3"
-        style={{ border: "1px solid #F89738", background: "#FFF8F0" }}>
-        <span className="text-xl">
-          {fileExt(file.name) === "pdf" ? "📄" : fileExt(file.name) === "docx" ? "📝" : "📃"}
-        </span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-heading font-bold truncate" style={{ color: "#09131b" }}>{file.name}</p>
-          <p className="text-xs mt-0.5 font-body" style={{ color: "#8B8B8B" }}>{fmtBytes(file.size)}</p>
+      {/* ── Navbar ─────────────────────────────────────────────────────── */}
+      <header style={{ background: C.dark }}>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center gap-3">
+          <span className="font-bold text-2xl tracking-tight" style={{ color: C.white, fontFamily: FONT_HEAD }}>
+            MResult
+          </span>
+          <span className="text-sm font-medium px-3 py-1 rounded-full" style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY }}>
+            Contract Negotiation
+          </span>
         </div>
-        <button
-          onClick={() => onFile(null)}
-          title="Remove"
-          className="shrink-0 text-lg leading-none transition-colors"
-          style={{ color: "#BBBBBB" }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#8B8B8B")}
-          onMouseLeave={e => (e.currentTarget.style.color = "#BBBBBB")}
-        >✕</button>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      onDragOver={e => { e.preventDefault(); setDragging(true); }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handle(f); }}
-      onClick={() => inputRef.current?.click()}
-      className="rounded-lg p-6 text-center cursor-pointer transition-all duration-200 select-none"
-      style={{
-        border: `2px dashed ${dragging ? "#F89738" : "#DBDBDB"}`,
-        background: dragging ? "#FFF8F0" : "#FFFFFF",
-      }}
-    >
-      <input
-        ref={inputRef} type="file" accept={ACCEPT}
-        onChange={e => { const f = e.target.files?.[0]; if (f) handle(f); e.target.value = ""; }}
-        className="hidden"
-      />
-      <div className="flex flex-col items-center gap-2">
-        <div className="w-11 h-11 rounded-lg flex items-center justify-center text-xl"
-          style={{ background: dragging ? "#FFF0DC" : "#F4F4F4" }}>
-          ⬆
-        </div>
-        <div>
-          <p className="text-sm font-heading font-bold" style={{ color: "#09131b" }}>
-            {dragging ? "Drop it here" : "Upload your SOW"}
-          </p>
-          <p className="text-xs mt-0.5 font-body" style={{ color: "#8B8B8B" }}>
-            Drag & drop or click to browse
-          </p>
-          <p className="text-xs mt-1 font-body" style={{ color: "#BBBBBB" }}>
-            PDF · DOCX · TXT · max {MAX_MB} MB
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Feedback card ──────────────────────────────────────────────────────────
-function FeedbackCard({ onSubmit, onDismiss }: { onSubmit: (f: FeedbackForm) => void; onDismiss: () => void }) {
-  const [form, setForm] = useState<FeedbackForm>({
-    rating: 0, outcome: "agreed", what_worked: "", what_didnt: "", notes: ""
-  });
-  const set = (k: keyof FeedbackForm, v: string | number) => setForm(p => ({ ...p, [k]: v }));
-
-  const inputStyle = {
-    width: "100%",
-    background: "#F4F4F4",
-    border: "1px solid #DBDBDB",
-    borderRadius: "6px",
-    padding: "8px 12px",
-    fontSize: "13px",
-    color: "#09131b",
-    fontFamily: "'Montserrat', sans-serif",
-    resize: "none" as const,
-    outline: "none",
-  };
-
-  return (
-    <div className="rounded-xl p-5 space-y-4"
-      style={{ background: "#FFFFFF", border: "1px solid #DBDBDB", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="font-heading text-base font-bold" style={{ color: "#09131b" }}>Session Feedback</h3>
-          <p className="text-xs font-body mt-0.5" style={{ color: "#8B8B8B" }}>
-            Your rating helps the agent improve future negotiations
-          </p>
-        </div>
-        <button onClick={onDismiss} className="text-lg leading-none transition-colors mt-0.5"
-          style={{ color: "#BBBBBB" }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#8B8B8B")}
-          onMouseLeave={e => (e.currentTarget.style.color = "#BBBBBB")}>✕</button>
-      </div>
-
-      {/* Star rating */}
-      <div>
-        <p className="text-[10px] font-body uppercase tracking-widest mb-2" style={{ color: "#8B8B8B" }}>Overall rating</p>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map(n => (
-            <button key={n} onClick={() => set("rating", n)}
-              className="text-2xl transition-all hover:scale-110"
-              style={{ color: n <= form.rating ? "#F89738" : "#DBDBDB" }}>★</button>
-          ))}
-        </div>
-      </div>
-
-      {/* Outcome */}
-      <div>
-        <p className="text-[10px] font-body uppercase tracking-widest mb-2" style={{ color: "#8B8B8B" }}>Negotiation outcome</p>
-        <div className="flex gap-2">
-          {(["agreed", "partial", "no_deal"] as const).map(o => (
-            <button key={o} onClick={() => set("outcome", o)}
-              className="px-3 py-1.5 rounded-lg text-xs font-body transition-all"
-              style={{
-                border: form.outcome === o ? "1px solid #F89738" : "1px solid #DBDBDB",
-                background: form.outcome === o ? "#FFF8F0" : "#FFFFFF",
-                color: form.outcome === o ? "#F89738" : "#8B8B8B",
-                fontWeight: form.outcome === o ? "600" : "400",
-              }}>
-              {o === "agreed" ? "✓ Agreed" : o === "partial" ? "~ Partial" : "✕ No deal"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Text fields */}
-      <div className="grid grid-cols-2 gap-3">
-        {([
-          ["what_worked", "What worked well", "e.g. benchmark data was persuasive…"],
-          ["what_didnt",  "What to improve",  "e.g. more flexibility on milestone roles…"],
-        ] as const).map(([k, label, ph]) => (
-          <div key={k}>
-            <label className="text-[10px] font-body uppercase tracking-widest block mb-1" style={{ color: "#8B8B8B" }}>{label}</label>
-            <textarea value={form[k]} onChange={e => set(k, e.target.value)} rows={2} placeholder={ph} style={inputStyle} />
-          </div>
-        ))}
-      </div>
-
-      <div>
-        <label className="text-[10px] font-body uppercase tracking-widest block mb-1" style={{ color: "#8B8B8B" }}>Additional notes</label>
-        <textarea value={form.notes} onChange={e => set("notes", e.target.value)} rows={2} placeholder="Any other comments…" style={inputStyle} />
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3">
-        <button
-          onClick={() => form.rating > 0 && onSubmit(form)}
-          disabled={form.rating === 0}
-          className="flex-1 py-2.5 rounded-lg text-sm font-body font-semibold transition-all"
-          style={{
-            background: form.rating > 0 ? "#F89738" : "#F4F4F4",
-            color: form.rating > 0 ? "#FFFFFF" : "#BBBBBB",
-            cursor: form.rating > 0 ? "pointer" : "not-allowed",
-          }}
-          onMouseEnter={e => { if (form.rating > 0) e.currentTarget.style.background = "#e07e20"; }}
-          onMouseLeave={e => { if (form.rating > 0) e.currentTarget.style.background = "#F89738"; }}
-        >
-          Submit Feedback
-        </button>
-        <button onClick={onDismiss}
-          className="px-4 py-2.5 rounded-lg text-sm font-body transition-colors"
-          style={{ border: "1px solid #DBDBDB", color: "#8B8B8B", background: "#FFFFFF" }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = "#BBBBBB")}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = "#DBDBDB")}
-        >
-          Skip
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN PAGE
-// ═══════════════════════════════════════════════════════════════════════════
-export default function Home() {
-  const [file, setFile]                 = useState<File | null>(null);
-  const [sessionId, setSessionId]       = useState<string | null>(null);
-  const [filename, setFilename]         = useState("");
-  const [messages, setMessages]         = useState<ChatMessage[]>([]);
-  const [input, setInput]               = useState("");
-  const [loading, setLoading]           = useState(false);
-  const [analysing, setAnalysing]       = useState(false);
-  const [showFeedback,    setShowFeedback]    = useState(false);
-  const [feedbackDone,    setFeedbackDone]    = useState(false);
-  const [negotiationDone, setNegotiationDone] = useState(false);
-  const [history,         setHistory]         = useState<HistoryEntry[]>([]);
-  const [showHistory,     setShowHistory]     = useState(false);
-  const [online,          setOnline]          = useState<boolean | null>(null);
-
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef  = useRef<HTMLTextAreaElement>(null);
-
-  // Load history from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(HISTORY_KEY);
-      if (stored) setHistory(JSON.parse(stored));
-    } catch { /* ignore */ }
-  }, []);
-
-  // Reset session for next SOW
-  const resetSession = useCallback(() => {
-    setFile(null);
-    setSessionId(null);
-    setFilename("");
-    setMessages([]);
-    setInput("");
-    setLoading(false);
-    setAnalysing(false);
-    setShowFeedback(false);
-    setFeedbackDone(false);
-    setNegotiationDone(false);
-  }, []);
-
-  // Listen for approval decision posted from the approval popup window
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      if (event.data?.type !== "negotiation_decision") return;
-      const { session_id, filename: fn, decision, comments } = event.data;
-      const entry: HistoryEntry = {
-        session_id,
-        filename:   fn,
-        created_at: new Date().toISOString(),
-        decision,
-        comments:   comments || "",
-      };
-      setHistory(prev => {
-        const updated = [entry, ...prev.filter(h => h.session_id !== session_id)];
-        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
-        return updated;
-      });
-      resetSession();
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, [resetSession]);
-
-  useEffect(() => {
-    fetch(`${API}/api/health`)
-      .then(r => setOnline(r.ok))
-      .catch(() => setOnline(false));
-  }, []);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading, showFeedback]);
-
-  const analyse = useCallback(async () => {
-    if (!file || analysing) return;
-    setAnalysing(true);
-    setMessages([]);
-    setSessionId(null);
-    setShowFeedback(false);
-    setFeedbackDone(false);
-    setNegotiationDone(false);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res  = await fetch(`${API}/api/sessions`, { method: "POST", body: fd });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
-        throw new Error(err.detail);
-      }
-      const data = await res.json();
-      setSessionId(data.session_id);
-      setFilename(data.filename);
-      setMessages([{ role: "agent", content: data.reply }]);
-      if (data.negotiation_complete) { setShowFeedback(true); setNegotiationDone(true); }
-    } catch (e) {
-      setMessages([{ role: "agent", content: `⚠️ ${e instanceof Error ? e.message : "Unknown error"}` }]);
-    } finally {
-      setAnalysing(false);
-    }
-  }, [file, analysing]);
-
-  const send = useCallback(async () => {
-    const msg = input.trim();
-    if (!msg || !sessionId || loading) return;
-    setInput("");
-    setMessages(p => [...p, { role: "user", content: msg }]);
-    setLoading(true);
-    try {
-      const res  = await fetch(`${API}/api/sessions/${sessionId}/chat`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg }),
-      });
-      const data = await res.json();
-      setMessages(p => [...p, { role: "agent", content: data.reply }]);
-      if (data.negotiation_complete && !feedbackDone) { setShowFeedback(true); setNegotiationDone(true); }
-    } catch {
-      setMessages(p => [...p, { role: "agent", content: "⚠️ Network error — please try again." }]);
-    } finally {
-      setLoading(false);
-    }
-  }, [input, sessionId, loading, feedbackDone]);
-
-  const submitFeedback = useCallback(async (form: FeedbackForm) => {
-    setShowFeedback(false);
-    setFeedbackDone(true);
-    if (!sessionId) return;
-    try {
-      await fetch(`${API}/api/sessions/${sessionId}/feedback`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      setMessages(p => [...p, {
-        role: "agent",
-        content: `Thank you for your ${form.rating}★ feedback — it has been saved and will guide the agent in future negotiations.`,
-      }]);
-    } catch { /* silent */ }
-  }, [sessionId]);
-
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#F4F4F4", fontFamily: "'Montserrat', sans-serif" }}>
-
-      {/* ══════════════════════════════════════════════════════
-          HEADER — white background, full-colour logo on left
-          ══════════════════════════════════════════════════════ */}
-      <header className="sticky top-0 z-50" style={{ background: "#FFFFFF", borderBottom: "1px solid #DBDBDB" }}>
-        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
-
-          {/* Left: Name + app title */}
-          <div className="flex items-center gap-4">
-            <span className="font-heading font-bold text-xl" style={{ color: "#09131b" }}>
-              MResult
-            </span>
-            <div className="h-5 w-px" style={{ background: "#DBDBDB" }} />
-            <span className="font-heading font-bold text-base" style={{ color: "#09131b" }}>
-              Contract Negotiation
-            </span>
-          </div>
-
-          {/* Right: status */}
-          <div className="flex items-center gap-3">
-            {filename && (
-              <span className="hidden sm:block text-xs font-body max-w-[200px] truncate" style={{ color: "#8B8B8B" }}>
-                {filename}
-              </span>
-            )}
-            <span className="flex items-center gap-1.5 text-xs font-body"
-              style={{ color: online ? "#F89738" : online === null ? "#8B8B8B" : "#BBBBBB" }}>
-              <span className="w-2 h-2 rounded-full"
-                style={{
-                  background: online ? "#F89738" : online === null ? "#DBDBDB" : "#BBBBBB",
-                  animation: online ? "pulse 2s infinite" : "none",
-                }} />
-              {online ? "Agent Online" : online === null ? "Connecting…" : "Backend Offline"}
-            </span>
-          </div>
-        </div>
-
-        {/* Orange accent line */}
-        <div className="h-0.5" style={{ background: "linear-gradient(90deg, #F89738 0%, #FFFFFF 100%)" }} />
+        <div className="h-0.5" style={{ background: `linear-gradient(90deg, ${C.orange} 0%, ${C.dark} 100%)` }} />
       </header>
 
-      {/* ══════════════════════════════════════════════════════
-          BODY
-          ══════════════════════════════════════════════════════ */}
-      <div className="flex-1 flex max-w-[1400px] mx-auto w-full" style={{ height: "calc(100vh - 68px)", overflow: "hidden" }}>
+      {/* ── Hero ───────────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-14 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-6"
+          style={{ background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}` }}>
+          ✦ AI-Powered · Benchmark-Driven · Self-Learning
+        </div>
+        <h1 className="font-bold text-4xl md:text-5xl leading-tight mb-4"
+          style={{ color: C.dark, fontFamily: FONT_HEAD }}>
+          Intelligent Contract<br />Negotiation Platform
+        </h1>
+        <p className="text-base max-w-xl mx-auto mb-12" style={{ color: C.gray }}>
+          AI agent that reads your professional services SOW, benchmarks every rate against market data,
+          and negotiates with the vendor — so you don&apos;t have to.
+        </p>
 
-        {/* ── LEFT SIDEBAR ── */}
-        <aside className="w-[300px] shrink-0 flex flex-col overflow-y-auto"
-          style={{ background: "#FFFFFF", borderRight: "1px solid #DBDBDB" }}>
+        {/* ── Persona cards ─────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
 
-          {/* Upload section */}
-          <div className="p-5" style={{ borderBottom: "1px solid #DBDBDB" }}>
-            <p className="text-[10px] font-body uppercase tracking-widest mb-3" style={{ color: "#8B8B8B" }}>
-              Statement of Work
-            </p>
-            <UploadZone file={file} onFile={setFile} />
-          </div>
-
-          {/* Analyse button */}
-          <div className="p-5" style={{ borderBottom: "1px solid #DBDBDB" }}>
-            <button
-              onClick={analyse}
-              disabled={!file || analysing}
-              className="w-full py-3 rounded-lg font-body font-semibold text-sm tracking-wide transition-all duration-200"
-              style={{
-                background: analysing ? "#FDD9A8" : file ? "#F89738" : "#F4F4F4",
-                color: analysing ? "#09131b" : file ? "#FFFFFF" : "#BBBBBB",
-                cursor: !file || analysing ? "not-allowed" : "pointer",
-              }}
-              onMouseEnter={e => { if (file && !analysing) e.currentTarget.style.background = "#e07e20"; }}
-              onMouseLeave={e => { if (file && !analysing) e.currentTarget.style.background = "#F89738"; }}
-            >
-              {analysing ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 rounded-full animate-spin"
-                    style={{ borderColor: "#09131b33", borderTopColor: "#09131b" }} />
-                  Analysing…
-                </span>
-              ) : "Analyse & Negotiate"}
-            </button>
-            {!file && (
-              <p className="text-center text-xs mt-2 font-body" style={{ color: "#BBBBBB" }}>
-                Upload a SOW to get started
+          {/* Category Manager */}
+          <div className="rounded-2xl p-8 text-left flex flex-col gap-5 cursor-pointer transition-transform hover:-translate-y-1"
+            style={{ background: C.white, border: `2px solid ${C.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
+            onClick={() => router.push("/manager")}>
+            <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl"
+              style={{ background: C.orangeBg, border: `1px solid ${C.orangeBorder}` }}>📋</div>
+            <div>
+              <h2 className="font-bold text-xl mb-1" style={{ color: C.dark, fontFamily: FONT_HEAD }}>Category Manager</h2>
+              <p className="text-sm leading-relaxed" style={{ color: C.gray }}>
+                Upload contracts, track negotiation status, review agreed terms and approve or reject with feedback.
               </p>
-            )}
+            </div>
+            <ul className="space-y-1.5">
+              {["Upload & manage SOW contracts", "Send contracts for AI negotiation", "Track status in real time", "Approve or reject final terms"].map(a => (
+                <li key={a} className="flex items-center gap-2 text-sm" style={{ color: C.dark }}>
+                  <span style={{ color: C.orange }}>▸</span>{a}
+                </li>
+              ))}
+            </ul>
+            <button
+              className="mt-auto w-full py-3 rounded-xl font-semibold text-sm transition-all"
+              style={{ background: C.dark, color: C.white, fontFamily: FONT_BODY }}>
+              Enter Category Manager Portal →
+            </button>
           </div>
 
-          {/* How it works */}
-          <div className="p-5 flex-1">
-            <p className="text-[10px] font-body uppercase tracking-widest mb-4" style={{ color: "#8B8B8B" }}>
-              How it works
+          {/* Vendor */}
+          <div className="rounded-2xl p-8 text-left flex flex-col gap-5 cursor-pointer transition-transform hover:-translate-y-1"
+            style={{ background: C.white, border: `2px solid ${C.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
+            onClick={() => router.push("/vendor")}>
+            <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl"
+              style={{ background: "#F0F6FF", border: "1px solid #C3D9F5" }}>🤝</div>
+            <div>
+              <h2 className="font-bold text-xl mb-1" style={{ color: C.dark, fontFamily: FONT_HEAD }}>Vendor</h2>
+              <p className="text-sm leading-relaxed" style={{ color: C.gray }}>
+                Respond to negotiation invitations, discuss rates and terms with the AI agent, and reach agreement professionally.
+              </p>
+            </div>
+            <ul className="space-y-1.5">
+              {["Receive negotiation invitations", "Chat with AI negotiation agent", "Discuss roles, rates & payment terms", "Submit agreed terms for approval"].map(a => (
+                <li key={a} className="flex items-center gap-2 text-sm" style={{ color: C.dark }}>
+                  <span style={{ color: C.orange }}>▸</span>{a}
+                </li>
+              ))}
+            </ul>
+            <button
+              className="mt-auto w-full py-3 rounded-xl font-semibold text-sm transition-all"
+              style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY }}>
+              Enter Vendor Portal →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ───────────────────────────────────────────────── */}
+      <section style={{ background: C.white, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+        <div className="max-w-5xl mx-auto px-6 py-14">
+          <h2 className="font-bold text-3xl text-center mb-2" style={{ color: C.dark, fontFamily: FONT_HEAD }}>How It Works</h2>
+          <p className="text-sm text-center mb-10" style={{ color: C.gray }}>Five steps from upload to approved terms</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {STEPS.map((s) => (
+              <div key={s.n} className="rounded-xl p-5 flex flex-col gap-3"
+                style={{ background: C.light, border: `1px solid ${C.border}` }}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{s.icon}</span>
+                  <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: C.orange }}>{s.n}</span>
+                </div>
+                <p className="font-bold text-sm" style={{ color: C.dark, fontFamily: FONT_HEAD }}>{s.title}</p>
+                <p className="text-xs leading-relaxed" style={{ color: C.gray }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Benchmark criteria ─────────────────────────────────────────── */}
+      <section>
+        <div className="max-w-5xl mx-auto px-6 py-14">
+          <h2 className="font-bold text-3xl text-center mb-2" style={{ color: C.dark, fontFamily: FONT_HEAD }}>Benchmark Criteria</h2>
+          <p className="text-sm text-center mb-2" style={{ color: C.gray }}>
+            Every role rate is positioned against market percentiles for IT professional services
+          </p>
+          <p className="text-xs text-center mb-10" style={{ color: C.border.replace("#", "#") }}>
+            Benchmarks based on internal market data (hourly rates, USD)
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+            {BENCHMARKS.map((bm) => (
+              <div key={bm.label} className="rounded-xl p-5 flex flex-col gap-3"
+                style={{ background: bm.bg, border: `1px solid ${bm.border}` }}>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-2xl" style={{ color: bm.color, fontFamily: FONT_HEAD }}>{bm.label}</span>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: C.white, color: bm.color, border: `1px solid ${bm.border}` }}>
+                    {bm.subtitle}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: C.dark }}>{bm.desc}</p>
+                <div className="pt-2 mt-auto" style={{ borderTop: `1px solid ${bm.border}` }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: bm.color }}>Agent Usage</p>
+                  <p className="text-[11px]" style={{ color: C.gray }}>{bm.usage}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Rate example */}
+          <div className="mt-8 rounded-xl p-5" style={{ background: C.white, border: `1px solid ${C.border}` }}>
+            <p className="text-xs font-semibold mb-3" style={{ color: C.dark, fontFamily: FONT_HEAD }}>
+              📌 Example — Solution Architect
             </p>
-            <div className="space-y-4">
-              {[
-                ["01", "Upload",      "Upload your SOW — PDF, DOCX or TXT"],
-                ["02", "Extract",     "Agent reads every role, rate and payment term"],
-                ["03", "Benchmark",   "Rates benchmarked against industry standard data"],
-                ["04", "Negotiate",   "Interactive chat to reach fair market terms"],
-                ["05", "Feedback",    "Rate the session — agent learns and improves"],
-              ].map(([n, title, desc]) => (
-                <div key={n} className="flex items-start gap-3">
-                  <div className="shrink-0 w-7 h-7 rounded flex items-center justify-center text-[10px] font-heading font-bold"
-                    style={{ background: "#FFF4E5", border: "1px solid #FDDCB0", color: "#F89738" }}>
-                    {n}
-                  </div>
-                  <div>
-                    <p className="text-sm font-heading font-bold" style={{ color: "#09131b" }}>{title}</p>
-                    <p className="text-xs mt-0.5 font-body leading-snug" style={{ color: "#8B8B8B" }}>{desc}</p>
-                  </div>
+            <div className="grid grid-cols-4 gap-3">
+              {[["P25", "$185/hr", "Entry"], ["P50", "$208/hr", "Target ✓"], ["P75", "$232/hr", "Walk-away"], ["P90", "$260/hr", "Flag"]].map(([p, r, l]) => (
+                <div key={p} className="text-center">
+                  <p className="text-[10px] uppercase tracking-wide font-semibold mb-0.5" style={{ color: C.gray }}>{p}</p>
+                  <p className="font-bold text-base" style={{ color: C.dark, fontFamily: FONT_HEAD }}>{r}</p>
+                  <p className="text-[10px]" style={{ color: C.gray }}>{l}</p>
                 </div>
               ))}
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* History panel */}
-          {history.length > 0 && (
-            <div style={{ borderTop: "1px solid #DBDBDB" }}>
-              <button
-                onClick={() => setShowHistory(h => !h)}
-                className="w-full px-5 py-3 flex items-center justify-between text-left"
-                style={{ background: "#FAFAFA" }}
-              >
-                <span className="text-[10px] font-body uppercase tracking-widest" style={{ color: "#8B8B8B" }}>
-                  History ({history.length})
-                </span>
-                <span className="text-xs" style={{ color: "#BBBBBB" }}>{showHistory ? "▲" : "▼"}</span>
-              </button>
-              {showHistory && (
-                <div className="overflow-y-auto max-h-48 divide-y divide-gray-100">
-                  {history.map(h => (
-                    <div key={h.session_id} className="px-5 py-3 flex items-center gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold truncate font-body" style={{ color: "#09131b" }}>{h.filename}</p>
-                        <p className="text-[10px] mt-0.5 font-body" style={{ color: "#BBBBBB" }}>
-                          {new Date(h.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold font-body"
-                          style={{
-                            background: h.decision === "approved" ? "#FFF8F0" : h.decision === "rejected" ? "#FFF4F4" : "#F4F4F4",
-                            color:      h.decision === "approved" ? "#F89738" : h.decision === "rejected" ? "#8B8B8B" : "#BBBBBB",
-                            border:     `1px solid ${h.decision === "approved" ? "#FDDCB0" : "#DBDBDB"}`,
-                          }}>
-                          {h.decision === "approved" ? "✓ Approved" : h.decision === "rejected" ? "✕ Rejected" : "Pending"}
-                        </span>
-                        <button
-                          onClick={() => window.open(`/approval/${h.session_id}`, "_blank")}
-                          className="text-[10px] font-body underline"
-                          style={{ color: "#BBBBBB" }}
-                        >View</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="p-4" style={{ borderTop: "1px solid #DBDBDB" }}>
-            <p className="text-[10px] text-center font-body" style={{ color: "#BBBBBB" }}>
-              Powered by Claude Sonnet · MResult AI
-            </p>
-          </div>
-        </aside>
-
-        {/* ── CHAT AREA ── */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ background: "#F4F4F4" }}>
-
-          {/* Session bar */}
-          {sessionId && (
-            <div className="px-6 py-3 flex items-center gap-3 shrink-0"
-              style={{ background: "#FFFFFF", borderBottom: "1px solid #DBDBDB" }}>
-              <span className="text-lg">📄</span>
-              <div className="min-w-0">
-                <p className="text-sm font-heading font-bold truncate" style={{ color: "#09131b" }}>{filename}</p>
-                <p className="text-xs font-body" style={{ color: "#F89738" }}>Negotiation in progress</p>
-              </div>
-            </div>
-          )}
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-
-            {/* Empty state */}
-            {messages.length === 0 && !analysing && (
-              <div className="h-full flex flex-col items-center justify-center text-center py-16">
-                <div className="mb-6 w-16 h-16 rounded-xl flex items-center justify-center text-3xl"
-                  style={{ background: "#FFFFFF", border: "1px solid #DBDBDB" }}>
-                  🤝
-                </div>
-                <h2 className="font-heading font-bold text-xl mb-2" style={{ color: "#09131b" }}>
-                  Ready to Negotiate
-                </h2>
-                <p className="text-sm font-body max-w-xs leading-relaxed" style={{ color: "#8B8B8B" }}>
-                  Upload your Statement of Work and click{" "}
-                  <strong className="font-semibold" style={{ color: "#09131b" }}>Analyse & Negotiate</strong>{" "}
-                  to begin benchmarking and negotiating.
-                </p>
-                <div className="mt-6 flex items-center gap-5 text-xs font-body" style={{ color: "#BBBBBB" }}>
-                  <span>📄 PDF</span>
-                  <span style={{ color: "#DBDBDB" }}>·</span>
-                  <span>📝 DOCX</span>
-                  <span style={{ color: "#DBDBDB" }}>·</span>
-                  <span>📃 TXT</span>
-                </div>
-              </div>
-            )}
-
-            {/* Analysing indicator */}
-            {analysing && (
-              <div className="flex items-center gap-3 p-4 rounded-lg max-w-sm"
-                style={{ background: "#FFFFFF", border: "1px solid #FDDCB0" }}>
-                <div className="flex gap-1">
-                  {[0, 1, 2].map(i => (
-                    <span key={i} className="typing-dot w-2 h-2 rounded-full inline-block"
-                      style={{ background: "#F89738", animationDelay: `${i * 0.16}s` }} />
-                  ))}
-                </div>
-                <span className="text-sm font-body" style={{ color: "#09131b" }}>
-                  Extracting and benchmarking your SOW…
-                </span>
-              </div>
-            )}
-
-            {messages.map((msg, i) => <ChatBubble key={i} msg={msg} />)}
-
-            {/* Agent thinking */}
-            {loading && (
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-heading font-bold text-white"
-                  style={{ background: "#F89738" }}>AI</div>
-                <div className="rounded-2xl px-4 py-3 flex gap-1.5 items-center"
-                  style={{ background: "#FFFFFF", border: "1px solid #DBDBDB", borderTopLeftRadius: "4px" }}>
-                  {[0, 1, 2].map(i => (
-                    <span key={i} className="typing-dot w-2 h-2 rounded-full inline-block"
-                      style={{ background: "#F89738", animationDelay: `${i * 0.16}s` }} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {showFeedback && !feedbackDone && (
-              <FeedbackCard
-                onSubmit={submitFeedback}
-                onDismiss={() => { setShowFeedback(false); setFeedbackDone(true); }}
-              />
-            )}
-
-            {/* Buyer Approval button — shown when negotiation is complete */}
-            {negotiationDone && sessionId && (
-              <div className="rounded-xl p-5" style={{ background: "#FFFFFF", border: "1px solid #FDDCB0" }}>
-                <div className="flex items-start gap-3 mb-4">
-                  <span className="text-2xl">📋</span>
-                  <div>
-                    <p className="font-heading font-bold text-sm" style={{ color: "#09131b" }}>
-                      Send for Buyer Approval
-                    </p>
-                    <p className="text-xs mt-0.5 font-body" style={{ color: "#8B8B8B" }}>
-                      Negotiation is complete. Open the approval page to share with the buyer for a formal decision.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => window.open(`/approval/${sessionId}`, "_blank")}
-                  className="w-full py-3 rounded-lg font-body font-semibold text-sm transition-all"
-                  style={{ background: "#F89738", color: "#FFFFFF" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "#e07e20")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "#F89738")}
-                >
-                  Open Approval Page ↗
-                </button>
-              </div>
-            )}
-
-            <div ref={bottomRef} />
-          </div>
-
-          {/* ── Input bar ── */}
-          <div className="shrink-0 px-6 py-4" style={{ background: "#FFFFFF", borderTop: "1px solid #DBDBDB" }}>
-            <div className="flex gap-3 items-end rounded-lg px-4 py-3 transition-colors"
-              style={{
-                border: sessionId ? "1px solid #DBDBDB" : "1px solid #F4F4F4",
-                background: sessionId ? "#FFFFFF" : "#F4F4F4",
-                opacity: sessionId ? 1 : 0.6,
-              }}>
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKey}
-                disabled={!sessionId || loading}
-                rows={1}
-                placeholder={
-                  sessionId
-                    ? "Type your response… (Enter to send · Shift+Enter for new line)"
-                    : "Upload and analyse a SOW to begin negotiating"
-                }
-                className="flex-1 bg-transparent text-sm resize-none focus:outline-none font-body leading-relaxed max-h-36"
-                style={{ color: "#09131b" }}
-              />
-              <button
-                onClick={send}
-                disabled={!sessionId || loading || !input.trim()}
-                className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all"
-                style={{
-                  background: sessionId && !loading && input.trim() ? "#F89738" : "#F4F4F4",
-                  color: sessionId && !loading && input.trim() ? "#FFFFFF" : "#BBBBBB",
-                  cursor: sessionId && !loading && input.trim() ? "pointer" : "not-allowed",
-                }}
-                onMouseEnter={e => { if (sessionId && !loading && input.trim()) e.currentTarget.style.background = "#e07e20"; }}
-                onMouseLeave={e => { if (sessionId && !loading && input.trim()) e.currentTarget.style.background = "#F89738"; }}
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
+      {/* ── Footer ─────────────────────────────────────────────────────── */}
+      <footer style={{ background: C.dark, borderTop: `1px solid #1a2733` }}>
+        <div className="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
+          <span className="font-bold text-base" style={{ color: C.white, fontFamily: FONT_HEAD }}>MResult</span>
+          <span className="text-xs" style={{ color: "#4a6070" }}>Powered by Claude Sonnet · AI Contract Negotiation</span>
+        </div>
+      </footer>
     </div>
   );
 }

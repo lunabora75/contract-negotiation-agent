@@ -1,5 +1,6 @@
 """
-FastAPI backend — single-agent contract negotiation.
+FastAPI backend — Contract Negotiation Agent v4
+Status flow: uploaded → sent_for_negotiation → negotiation_in_progress → pending_approval → approved/rejected
 """
 
 import io
@@ -19,7 +20,7 @@ load_dotenv()
 from agent import NegotiationAgent
 
 # ── app ───────────────────────────────────────────────────────────────────
-app = FastAPI(title="Contract Negotiation Agent", version="3.0.0")
+app = FastAPI(title="Contract Negotiation Agent", version="4.0.0")
 
 _cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 app.add_middleware(
@@ -33,10 +34,17 @@ app.add_middleware(
 # ── session store ─────────────────────────────────────────────────────────
 SESSIONS: Dict[str, dict] = {}
 
+# ── status constants ──────────────────────────────────────────────────────
+S_UPLOADED         = "uploaded"
+S_SENT_FOR_NEG     = "sent_for_negotiation"
+S_NEG_IN_PROGRESS  = "negotiation_in_progress"
+S_PENDING_APPROVAL = "pending_approval"
+S_APPROVED         = "approved"
+S_REJECTED         = "rejected"
+
 # ── file text extraction ──────────────────────────────────────────────────
 def _extract_text(filename: str, content: bytes) -> str:
     ext = Path(filename).suffix.lower()
-
     if ext == ".pdf":
         try:
             from pypdf import PdfReader
@@ -48,7 +56,6 @@ def _extract_text(filename: str, content: bytes) -> str:
             return text
         except ImportError:
             raise HTTPException(500, "pypdf is not installed.")
-
     if ext in (".docx",):
         try:
             from docx import Document
@@ -57,10 +64,8 @@ def _extract_text(filename: str, content: bytes) -> str:
             return "\n".join(paras)
         except ImportError:
             raise HTTPException(500, "python-docx is not installed.")
-
     if ext in (".txt", ".md", ""):
         return content.decode("utf-8", errors="replace")
-
     raise HTTPException(415, f"Unsupported file type '{ext}'. Please upload PDF, DOCX, or TXT.")
 
 # ── negotiation-complete heuristic ────────────────────────────────────────
@@ -71,6 +76,8 @@ def _negotiation_complete(reply: str) -> bool:
         "negotiation is complete", "summary of outcomes",
         "we have reached agreement", "session complete",
         "all items have been agreed", "agreement has been reached",
+        "sent to the category manager", "forwarded to the category manager",
+        "category manager for approval", "pending category manager approval",
     ]
     low = reply.lower()
     return any(m in low for m in markers)
@@ -92,13 +99,37 @@ class ApprovalRequest(BaseModel):
     approver:  str = ""
 
 # ── routes ─────────────────────────────────────────────────────────────────
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "model": os.getenv("MODEL", "claude-sonnet-4-5")}
 
 
+@app.get("/api/sessions")
+def list_sessions():
+    """List all sessions with status — used by both CM and Vendor portals."""
+    return [
+        {
+            "session_id": s["session_id"],
+            "filename":   s["filename"],
+            "status":     s.get("status", S_UPLOADED),
+            "created_at": s.get("created_at", ""),
+            "approval":   s.get("approval"),
+        }
+        for s in sorted(
+            SESSIONS.values(),
+            key=lambda x: x.get("created_at", ""),
+            reverse=True,
+        )
+    ]
+
+
 @app.post("/api/sessions")
 async def create_session(file: UploadFile = File(...)):
+    """
+    Upload a contract SOW. Extracts text and stores session with status=uploaded.
+    The agent does NOT run at this point — Category Manager must trigger it.
+    """
     content  = await file.read()
     filename = file.filename or "upload.txt"
 
@@ -107,26 +138,66 @@ async def create_session(file: UploadFile = File(...)):
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(413, "File too large. Maximum size is 10 MB.")
 
-    sow_text = _extract_text(filename, content)
-
-    session_id  = uuid.uuid4().hex[:10]
-    agent       = NegotiationAgent()
-    reply, msgs = agent.run_turn([], sow_text=sow_text)
+    sow_text   = _extract_text(filename, content)
+    session_id = uuid.uuid4().hex[:10]
 
     SESSIONS[session_id] = {
         "session_id": session_id,
         "filename":   filename,
-        "messages":   msgs,
-        "chat":       [{"role": "agent", "content": reply}],
+        "sow_text":   sow_text,
+        "messages":   [],
+        "chat":       [],
+        "status":     S_UPLOADED,
         "approval":   None,
         "created_at": datetime.datetime.utcnow().isoformat(),
     }
 
     return {
+        "session_id": session_id,
+        "filename":   filename,
+        "status":     S_UPLOADED,
+    }
+
+
+@app.post("/api/sessions/{session_id}/trigger")
+def trigger_negotiation(session_id: str):
+    """Category Manager sends the contract to the Agent for negotiation."""
+    session = SESSIONS.get(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+    if session.get("status") not in (S_UPLOADED, S_SENT_FOR_NEG):
+        raise HTTPException(400, f"Cannot trigger from status: {session.get('status')}")
+    session["status"] = S_SENT_FOR_NEG
+    return {"session_id": session_id, "status": S_SENT_FOR_NEG}
+
+
+@app.post("/api/sessions/{session_id}/initiate")
+def initiate_negotiation(session_id: str):
+    """
+    Vendor opens the negotiation chat.
+    If status is sent_for_negotiation, runs the agent's opening turn.
+    If already in_progress, returns existing chat history.
+    """
+    session = SESSIONS.get(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+    if session.get("status") not in (S_SENT_FOR_NEG, S_NEG_IN_PROGRESS):
+        raise HTTPException(400, f"Session not ready for negotiation. Current status: {session.get('status')}")
+
+    if session.get("status") == S_SENT_FOR_NEG:
+        agent       = NegotiationAgent()
+        reply, msgs = agent.run_turn([], sow_text=session["sow_text"])
+        session["messages"] = msgs
+        session["chat"]     = [{"role": "agent", "content": reply}]
+        session["status"]   = S_NEG_IN_PROGRESS
+
+    last_msg = session["chat"][-1]["content"] if session.get("chat") else ""
+    return {
         "session_id":           session_id,
-        "filename":             filename,
-        "reply":                reply,
-        "negotiation_complete": _negotiation_complete(reply),
+        "filename":             session["filename"],
+        "chat":                 session.get("chat", []),
+        "status":               session["status"],
+        "negotiation_complete": _negotiation_complete(last_msg),
     }
 
 
@@ -145,15 +216,20 @@ def chat_turn(session_id: str, body: ChatRequest):
     session["messages"] = msgs
     session["chat"].append({"role": "agent", "content": reply})
 
+    complete = _negotiation_complete(reply)
+    if complete and session.get("status") == S_NEG_IN_PROGRESS:
+        session["status"] = S_PENDING_APPROVAL
+
     return {
         "reply":                reply,
-        "negotiation_complete": _negotiation_complete(reply),
+        "negotiation_complete": complete,
+        "status":               session["status"],
     }
 
 
 @app.get("/api/sessions/{session_id}/summary")
 def get_summary(session_id: str):
-    """Return the full negotiation transcript for the buyer approval page."""
+    """Full negotiation transcript — used by approval page."""
     session = SESSIONS.get(session_id)
     if not session:
         raise HTTPException(404, "Session not found")
@@ -161,6 +237,7 @@ def get_summary(session_id: str):
         "session_id": session_id,
         "filename":   session.get("filename", ""),
         "chat":       session.get("chat", []),
+        "status":     session.get("status", S_UPLOADED),
         "approval":   session.get("approval"),
         "created_at": session.get("created_at", ""),
     }
@@ -168,7 +245,7 @@ def get_summary(session_id: str):
 
 @app.post("/api/sessions/{session_id}/approval")
 def submit_approval(session_id: str, body: ApprovalRequest):
-    """Buyer approves or rejects the negotiated terms. Saved for agent learning."""
+    """Category Manager approves or rejects the negotiated terms."""
     session = SESSIONS.get(session_id)
     if not session:
         raise HTTPException(404, "Session not found")
@@ -183,12 +260,13 @@ def submit_approval(session_id: str, body: ApprovalRequest):
         "approver":  body.approver,
         "timestamp": datetime.datetime.utcnow().isoformat(),
     }
+    session["status"] = S_APPROVED if decision == "approved" else S_REJECTED
 
-    # Translate approval decision into agent feedback for learning
-    rating  = 5 if decision == "approved" else 2
-    outcome = "agreed" if decision == "approved" else "no_deal"
+    # Feed the decision back to the agent for learning
+    rating       = 5 if decision == "approved" else 2
+    outcome      = "agreed" if decision == "approved" else "no_deal"
     feedback_msg = (
-        f"Buyer approval decision received: {decision.upper()}. "
+        f"Category Manager approval decision received: {decision.upper()}. "
         f"Approver: {body.approver or 'anonymous'}. "
         f"Comments: {body.comments or 'none'}. "
         f"Please call the save_feedback tool with rating={rating}, "
@@ -200,7 +278,7 @@ def submit_approval(session_id: str, body: ApprovalRequest):
     )
     session["messages"] = updated
 
-    return {"saved": True, "decision": decision}
+    return {"saved": True, "decision": decision, "status": session["status"]}
 
 
 @app.post("/api/sessions/{session_id}/feedback")

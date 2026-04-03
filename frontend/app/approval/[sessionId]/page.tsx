@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -38,6 +38,7 @@ function PlainText({ text }: { text: string }) {
 
 export default function ApprovalPage() {
   const params    = useParams();
+  const router    = useRouter();
   const sessionId = params?.sessionId as string;
 
   const [summary,   setSummary]   = useState<SessionSummary | null>(null);
@@ -84,10 +85,10 @@ export default function ApprovalPage() {
 
       setSubmitted(true);
 
-      // Close this window after a short delay to show confirmation
+      // Navigate back to manager after a short delay
       setTimeout(() => {
-        try { window.close(); } catch { /* ignore if blocked */ }
-      }, 2500);
+        router.push("/manager");
+      }, 2000);
 
     } catch (e) {
       alert(e instanceof Error ? e.message : "Submission failed");
@@ -143,7 +144,7 @@ export default function ApprovalPage() {
           </p>
         )}
         <p className="text-xs mt-4" style={{ color: "#BBBBBB", fontFamily: "'Montserrat', sans-serif" }}>
-          This window will close automatically…
+          Returning to Category Manager portal…
         </p>
       </div>
     </div>
@@ -156,14 +157,22 @@ export default function ApprovalPage() {
     <div className="min-h-screen" style={{ background: "#F4F4F4", fontFamily: "'Montserrat', sans-serif" }}>
 
       {/* Header */}
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #DBDBDB" }}>
+      <header style={{ background: "#09131b" }}>
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="font-bold text-xl" style={{ fontFamily: "'Raleway', sans-serif", color: "#09131b" }}>
+          <div className="flex items-center gap-3">
+            <button onClick={() => router.push("/manager")}
+              className="text-sm transition-opacity hover:opacity-70"
+              style={{ color: "#F89738", fontFamily: "'Montserrat', sans-serif" }}>
+              ← Manager
+            </button>
+            <div className="w-px h-4" style={{ background: "#1a2733" }} />
+            <span className="font-bold text-xl" style={{ fontFamily: "'Raleway', sans-serif", color: "#FFFFFF" }}>
               MResult
             </span>
-            <div className="h-5 w-px" style={{ background: "#DBDBDB" }} />
-            <span className="text-sm font-semibold" style={{ color: "#09131b" }}>Buyer Approval</span>
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full"
+              style={{ background: "rgba(248,151,56,0.15)", color: "#F89738", border: "1px solid rgba(248,151,56,0.3)", fontFamily: "'Montserrat', sans-serif" }}>
+              Contract Approval
+            </span>
           </div>
           <span className="text-xs px-3 py-1 rounded-full font-semibold"
             style={{
