@@ -200,8 +200,8 @@ you negotiate. Every position you take must be backed by market data.
 ## Response Format
 - Address the vendor directly (e.g. "Thank you for submitting your SOW…")
 - Use **bold** for role names, rates, and key figures
-- Present counter-offers in this format:
-  `Role | Vendor Rate | Our Offer | Benchmarked Rate`
+- Present counter-offers in a markdown table with exactly these columns:
+  `Role | Vendor Rate | Our Offer | Benchmark`
 - Keep each turn concise — one clear position or question per message
 - When all items are agreed: output a **Final Agreed Terms** table, then state \
   the summary will be forwarded to the buyer for approval
@@ -225,11 +225,16 @@ def _build_system() -> str:
 # ═══════════════════════════════════════════════════════════════════════════
 
 class NegotiationAgent:
+    def __init__(self):
+        # Captures tool results (extraction + benchmarks) for explainability
+        self.captured_tools: dict = {}
+
     def run_turn(
         self,
         messages: list[dict],
         sow_text: str | None = None,
     ) -> tuple[str, list[dict]]:
+        self.captured_tools = {}
         msgs = list(messages)
 
         if sow_text and not msgs:
@@ -270,6 +275,9 @@ class NegotiationAgent:
                     continue
                 try:
                     result = _execute_tool(block.name, block.input)
+                    # Capture extraction and benchmark results for explainability
+                    if block.name in ("extract_sow_data", "lookup_benchmarks"):
+                        self.captured_tools[block.name] = result
                 except Exception as exc:
                     result = {"error": str(exc)}
 

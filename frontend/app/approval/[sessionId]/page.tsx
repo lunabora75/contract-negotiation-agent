@@ -5,60 +5,200 @@ import { useParams, useRouter } from "next/navigation";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+const C = {
+  dark: "#09131b", orange: "#F89738", gray: "#8B8B8B",
+  light: "#F4F4F4", border: "#DBDBDB", white: "#FFFFFF",
+  orangeBg: "#FFF8F0", orangeBorder: "#FDDCB0",
+};
+const FH = "'Raleway', sans-serif";
+const FB = "'Montserrat', sans-serif";
+
+// ── Types ─────────────────────────────────────────────────────────────────
 interface ChatMessage { role: "agent" | "user"; content: string; }
 
 interface SessionSummary {
   session_id: string;
   filename:   string;
   chat:       ChatMessage[];
+  status:     string;
   approval:   { decision: string; comments: string; approver: string; timestamp: string } | null;
   created_at: string;
 }
 
-// ── Simple text renderer (strips markdown symbols for clean approval view) ─
+interface ExtractionRole {
+  title:       string;
+  level?:      string;
+  fte_count?:  number;
+  hourly_rate: number;
+  confidence:  number;
+}
+
+interface RoleComparison {
+  title:                  string;
+  matched_benchmark?:     string;
+  proposed_rate:          number;
+  matched:                boolean;
+  p25?:                   number;
+  p50?:                   number;
+  p75?:                   number;
+  p90?:                   number;
+  market_position?:       string;
+  delta_from_median_pct?: number;
+  target_rate?:           number;
+  walk_away_rate?:        number;
+  monthly_cost_exposure?: number;
+}
+
+interface AnalysisData {
+  extract_sow_data?: {
+    client_name?:    string;
+    contract_value?: number;
+    duration_months?: number;
+    roles:           ExtractionRole[];
+    payment_terms:   { schedule: string; type?: string; confidence: number };
+    key_clauses?:    { ip_ownership?: string; termination?: string; liability_cap?: string; governing_law?: string };
+    extraction_notes?: string;
+  };
+  lookup_benchmarks?: {
+    role_comparisons:         RoleComparison[];
+    total_monthly_cost_exposure?: number;
+    payment_terms_assessment?: { proposed: string; preferred: string; status: string; note?: string };
+  };
+}
+
+// ── Helper components ─────────────────────────────────────────────────────
+
+function ConfidenceBadge({ score }: { score: number }) {
+  const pct   = Math.round(score * 100);
+  const high  = score >= 0.9;
+  const med   = score >= 0.7;
+  const color = high ? "#16A34A" : med ? "#D97706" : "#DC2626";
+  const bg    = high ? "#F0FDF4" : med ? "#FFFBEB" : "#FFF4F4";
+  const border= high ? "#BBF7D0" : med ? "#FDE68A" : "#FECACA";
+  const label = high ? "High"    : med ? "Medium"  : "Low";
+  return (
+    <span style={{ background: bg, color, border: `1px solid ${border}`, borderRadius: 12, padding: "2px 8px", fontSize: 10, fontWeight: 700, fontFamily: FB, whiteSpace: "nowrap" }}>
+      {label} {pct}%
+    </span>
+  );
+}
+
+function PositionBadge({ position }: { position?: string }) {
+  const map: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    below_market:       { label: "Below Benchmark",      color: "#4A90D9", bg: "#F0F6FF", border: "#C3D9F5" },
+    at_market:          { label: "At Benchmark",          color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0" },
+    above_market:       { label: "Above Benchmark",       color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
+    significantly_above:{ label: "Well Above Benchmark",  color: "#DC2626", bg: "#FFF4F4", border: "#FECACA" },
+  };
+  const m = map[position ?? ""] ?? { label: position ?? "Unknown", color: C.gray, bg: C.light, border: C.border };
+  return (
+    <span style={{ background: m.bg, color: m.color, border: `1px solid ${m.border}`, borderRadius: 12, padding: "2px 9px", fontSize: 10, fontWeight: 700, fontFamily: FB, whiteSpace: "nowrap" }}>
+      {m.label}
+    </span>
+  );
+}
+
+function PaymentStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { color: string; bg: string }> = {
+    acceptable:   { color: "#16A34A", bg: "#F0FDF4" },
+    flagged:      { color: "#DC2626", bg: "#FFF4F4" },
+    non_standard: { color: "#D97706", bg: "#FFFBEB" },
+  };
+  const m = map[status] ?? { color: C.gray, bg: C.light };
+  return (
+    <span style={{ background: m.bg, color: m.color, borderRadius: 12, padding: "2px 8px", fontSize: 10, fontWeight: 700, fontFamily: FB }}>
+      {status.replace("_", " ")}
+    </span>
+  );
+}
+
+// ── Section header ────────────────────────────────────────────────────────
+function SectionHeader({ icon, title, subtitle, badge }: { icon: string; title: string; subtitle?: string; badge?: React.ReactNode }) {
+  return (
+    <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, background: C.white, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 18 }}>{icon}</span>
+        <div>
+          <p style={{ fontFamily: FH, fontWeight: 700, fontSize: 14, color: C.dark, margin: 0 }}>{title}</p>
+          {subtitle && <p style={{ fontSize: 11, color: C.gray, margin: "2px 0 0", fontFamily: FB }}>{subtitle}</p>}
+        </div>
+      </div>
+      {badge}
+    </div>
+  );
+}
+
+// ── Table helpers ─────────────────────────────────────────────────────────
+function Th({ children }: { children: React.ReactNode }) {
+  return <th style={{ padding: "8px 14px", textAlign: "left", fontSize: 10, fontWeight: 700, color: C.gray, textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap", fontFamily: FB, background: C.light, borderBottom: `1px solid ${C.border}` }}>{children}</th>;
+}
+function Td({ children, highlight }: { children: React.ReactNode; highlight?: boolean }) {
+  return <td style={{ padding: "10px 14px", fontSize: 12, color: highlight ? C.orange : C.dark, fontWeight: highlight ? 700 : 400, fontFamily: FB, borderBottom: `1px solid ${C.border}`, verticalAlign: "middle" }}>{children}</td>;
+}
+
+// ── Plain text renderer for transcript ───────────────────────────────────
 function PlainText({ text }: { text: string }) {
   return (
-    <div className="space-y-1">
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {text.split("\n").map((line, i) => {
-        if (!line.trim()) return <div key={i} className="h-1" />;
+        if (!line.trim()) return <div key={i} style={{ height: 4 }} />;
         const clean = line
           .replace(/\*\*(.*?)\*\*/g, "$1")
           .replace(/`([^`]+)`/g, "$1")
           .replace(/^#{1,3}\s/, "")
           .replace(/^[-•▸]\s*/, "• ");
-        return (
-          <p key={i} className="text-sm leading-relaxed" style={{ color: "#09131b", fontFamily: "'Montserrat', sans-serif" }}>
-            {clean}
-          </p>
-        );
+        return <p key={i} style={{ fontSize: 13, lineHeight: 1.6, color: C.dark, margin: 0, fontFamily: FB }}>{clean}</p>;
       })}
     </div>
   );
 }
 
+// ── Extract final agreed terms from chat ─────────────────────────────────
+function extractFinalTerms(chat: ChatMessage[]): string | null {
+  for (let i = chat.length - 1; i >= 0; i--) {
+    const msg = chat[i];
+    if (msg.role === "agent") {
+      const lc = msg.content.toLowerCase();
+      if (lc.includes("final agreed terms") || lc.includes("agreed terms") || lc.includes("summary of outcomes")) {
+        return msg.content;
+      }
+    }
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// MAIN PAGE
+// ─────────────────────────────────────────────────────────────────────────
 export default function ApprovalPage() {
   const params    = useParams();
   const router    = useRouter();
   const sessionId = params?.sessionId as string;
 
-  const [summary,   setSummary]   = useState<SessionSummary | null>(null);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState("");
-  const [decision,  setDecision]  = useState<"approved" | "rejected" | "">("");
-  const [comments,  setComments]  = useState("");
-  const [approver,  setApprover]  = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting,setSubmitting]= useState(false);
+  const [summary,    setSummary]    = useState<SessionSummary | null>(null);
+  const [analysis,   setAnalysis]   = useState<AnalysisData | null>(null);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState("");
+  const [decision,   setDecision]   = useState<"approved" | "rejected" | "">("");
+  const [comments,   setComments]   = useState("");
+  const [approver,   setApprover]   = useState("");
+  const [submitted,  setSubmitted]  = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Collapsible sections
+  const [showTranscript, setShowTranscript] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
-    fetch(`${API}/api/sessions/${sessionId}/summary`)
-      .then(r => {
-        if (!r.ok) throw new Error("Session not found");
-        return r.json();
-      })
-      .then(data => { setSummary(data); setLoading(false); })
-      .catch(e  => { setError(e.message); setLoading(false); });
+    // Fetch summary and analysis in parallel
+    Promise.all([
+      fetch(`${API}/api/sessions/${sessionId}/summary`).then(r => { if (!r.ok) throw new Error("Session not found"); return r.json(); }),
+      fetch(`${API}/api/sessions/${sessionId}/analysis`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([sum, ana]) => {
+      setSummary(sum);
+      setAnalysis(ana);
+      setLoading(false);
+    }).catch(e => { setError(e.message); setLoading(false); });
   }, [sessionId]);
 
   const handleSubmit = async () => {
@@ -66,30 +206,12 @@ export default function ApprovalPage() {
     setSubmitting(true);
     try {
       const res = await fetch(`${API}/api/sessions/${sessionId}/approval`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ decision, comments, approver }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, comments, approver }),
       });
       if (!res.ok) throw new Error("Failed to submit");
-
-      // Notify the parent window (main page) so it can update history + reset
-      if (window.opener) {
-        window.opener.postMessage({
-          type:       "negotiation_decision",
-          session_id: sessionId,
-          filename:   summary?.filename ?? "",
-          decision,
-          comments,
-        }, "*");
-      }
-
       setSubmitted(true);
-
-      // Navigate back to manager after a short delay
-      setTimeout(() => {
-        router.push("/manager");
-      }, 2000);
-
+      setTimeout(() => router.push("/manager"), 2000);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Submission failed");
     } finally {
@@ -97,274 +219,418 @@ export default function ApprovalPage() {
     }
   };
 
-  // ── Loading ──
+  // ── Loading / Error / Submitted screens ─────────────────────────────────
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#F4F4F4" }}>
-      <div className="text-center">
-        <div className="w-10 h-10 border-2 rounded-full animate-spin mx-auto mb-3"
-          style={{ borderColor: "#DBDBDB", borderTopColor: "#F89738" }} />
-        <p className="text-sm font-body" style={{ color: "#8B8B8B", fontFamily: "'Montserrat', sans-serif" }}>
-          Loading negotiation summary…
-        </p>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.light }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ width: 40, height: 40, border: `2px solid ${C.border}`, borderTopColor: C.orange, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+        <p style={{ fontSize: 13, color: C.gray, fontFamily: FB }}>Loading negotiation review…</p>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
-  // ── Error ──
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#F4F4F4" }}>
-      <div className="text-center p-8 rounded-xl max-w-sm" style={{ background: "#FFFFFF", border: "1px solid #DBDBDB" }}>
-        <p className="text-2xl mb-3">⚠️</p>
-        <p className="font-heading font-bold mb-1" style={{ color: "#09131b", fontFamily: "'Raleway', sans-serif" }}>Session Not Found</p>
-        <p className="text-sm" style={{ color: "#8B8B8B", fontFamily: "'Montserrat', sans-serif" }}>{error}</p>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.light }}>
+      <div style={{ textAlign: "center", padding: 32, borderRadius: 16, background: C.white, border: `1px solid ${C.border}`, maxWidth: 360 }}>
+        <p style={{ fontSize: 28, margin: "0 0 8px" }}>⚠️</p>
+        <p style={{ fontFamily: FH, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Session Not Found</p>
+        <p style={{ fontSize: 13, color: C.gray, fontFamily: FB }}>{error}</p>
       </div>
     </div>
   );
 
-  // ── Already submitted ──
   if (submitted) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#F4F4F4" }}>
-      <div className="text-center p-10 rounded-xl max-w-md" style={{ background: "#FFFFFF", border: "1px solid #DBDBDB", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
-        <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto mb-5"
-          style={{ background: decision === "approved" ? "#FFF8F0" : "#F4F4F4", border: `2px solid ${decision === "approved" ? "#F89738" : "#DBDBDB"}` }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.light }}>
+      <div style={{ textAlign: "center", padding: 40, borderRadius: 20, background: C.white, border: `1px solid ${C.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.08)", maxWidth: 400 }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: decision === "approved" ? C.orangeBg : C.light, border: `2px solid ${decision === "approved" ? C.orange : C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 20px" }}>
           {decision === "approved" ? "✓" : "✕"}
         </div>
-        <h2 className="font-heading font-bold text-xl mb-2"
-          style={{ color: "#09131b", fontFamily: "'Raleway', sans-serif" }}>
+        <h2 style={{ fontFamily: FH, fontWeight: 700, fontSize: 20, color: C.dark, margin: "0 0 8px" }}>
           {decision === "approved" ? "Terms Approved" : "Terms Rejected"}
         </h2>
-        <p className="text-sm mb-1" style={{ color: "#8B8B8B", fontFamily: "'Montserrat', sans-serif" }}>
-          {decision === "approved"
-            ? "The negotiated terms have been approved and saved."
-            : "The negotiated terms have been rejected. The agent will use your feedback to improve."}
+        <p style={{ fontSize: 13, color: C.gray, fontFamily: FB, margin: "0 0 8px" }}>
+          {decision === "approved" ? "Negotiated terms approved and saved." : "The agent will learn from your feedback for future negotiations."}
         </p>
-        {comments && (
-          <p className="text-xs mt-3 p-3 rounded-lg" style={{ background: "#F4F4F4", color: "#8B8B8B", fontFamily: "'Montserrat', sans-serif" }}>
-            "{comments}"
-          </p>
-        )}
-        <p className="text-xs mt-4" style={{ color: "#BBBBBB", fontFamily: "'Montserrat', sans-serif" }}>
-          Returning to Category Manager portal…
-        </p>
+        {comments && <p style={{ fontSize: 12, background: C.light, borderRadius: 8, padding: "8px 12px", color: C.gray, fontFamily: FB, margin: "8px 0 0" }}>"{comments}"</p>}
+        <p style={{ fontSize: 11, color: C.border, fontFamily: FB, marginTop: 16 }}>Returning to Category Manager portal…</p>
       </div>
     </div>
   );
 
-  // ── Already has an approval decision stored ──
   const existingApproval = summary?.approval;
+  const ext   = analysis?.extract_sow_data;
+  const bench = analysis?.lookup_benchmarks;
+  const finalTermsMsg = summary?.chat ? extractFinalTerms(summary.chat) : null;
+
+  // Total potential savings
+  const totalSavings = bench?.total_monthly_cost_exposure ?? 0;
 
   return (
-    <div className="min-h-screen" style={{ background: "#F4F4F4", fontFamily: "'Montserrat', sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: C.light, fontFamily: FB }}>
 
-      {/* Header */}
-      <header style={{ background: "#09131b" }}>
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      {/* ── Navbar ──────────────────────────────────────────────────────── */}
+      <header style={{ background: C.dark }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button onClick={() => router.push("/manager")}
-              className="text-sm transition-opacity hover:opacity-70"
-              style={{ color: "#F89738", fontFamily: "'Montserrat', sans-serif" }}>
+              style={{ fontSize: 13, color: C.orange, background: "none", border: "none", cursor: "pointer", fontFamily: FB }}>
               ← Manager
             </button>
-            <div className="w-px h-4" style={{ background: "#1a2733" }} />
-            <span className="font-bold text-xl" style={{ fontFamily: "'Raleway', sans-serif", color: "#FFFFFF" }}>
-              MResult
-            </span>
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(248,151,56,0.15)", color: "#F89738", border: "1px solid rgba(248,151,56,0.3)", fontFamily: "'Montserrat', sans-serif" }}>
+            <div style={{ width: 1, height: 16, background: "#1a2733" }} />
+            <span style={{ fontFamily: FH, fontWeight: 800, fontSize: 20, color: C.white }}>MResult</span>
+            <span style={{ fontSize: 11, fontWeight: 600, background: "rgba(248,151,56,0.15)", color: C.orange, border: "1px solid rgba(248,151,56,0.3)", borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
               Contract Approval
             </span>
           </div>
-          <span className="text-xs px-3 py-1 rounded-full font-semibold"
-            style={{
-              background: existingApproval
-                ? (existingApproval.decision === "approved" ? "#FFF8F0" : "#FFF4F4")
-                : "#F4F4F4",
-              color: existingApproval
-                ? (existingApproval.decision === "approved" ? "#F89738" : "#8B8B8B")
-                : "#8B8B8B",
-              border: `1px solid ${existingApproval ? (existingApproval.decision === "approved" ? "#FDDCB0" : "#DBDBDB") : "#DBDBDB"}`,
-            }}>
+          <span style={{
+            fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 20, fontFamily: FB,
+            background: existingApproval ? (existingApproval.decision === "approved" ? C.orangeBg : C.light) : C.light,
+            color: existingApproval ? (existingApproval.decision === "approved" ? C.orange : C.gray) : C.gray,
+            border: `1px solid ${existingApproval ? (existingApproval.decision === "approved" ? C.orangeBorder : C.border) : C.border}`,
+          }}>
             {existingApproval ? existingApproval.decision.toUpperCase() : "PENDING APPROVAL"}
           </span>
         </div>
-        <div className="h-0.5" style={{ background: "linear-gradient(90deg, #F89738 0%, #FFFFFF 100%)" }} />
+        <div style={{ height: 2, background: `linear-gradient(90deg, ${C.orange} 0%, ${C.dark} 100%)` }} />
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
 
-        {/* Document info */}
-        <div className="rounded-xl p-5" style={{ background: "#FFFFFF", border: "1px solid #DBDBDB" }}>
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">📄</span>
+        {/* ── Document info ────────────────────────────────────────────── */}
+        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 24 }}>📄</span>
             <div>
-              <h1 className="font-bold text-base" style={{ fontFamily: "'Raleway', sans-serif", color: "#09131b" }}>
-                {summary?.filename}
-              </h1>
-              <p className="text-xs mt-0.5" style={{ color: "#8B8B8B" }}>
+              <h1 style={{ fontFamily: FH, fontWeight: 700, fontSize: 16, color: C.dark, margin: 0 }}>{summary?.filename}</h1>
+              <p style={{ fontSize: 11, color: C.gray, margin: "3px 0 0", fontFamily: FB }}>
                 Negotiation Session · {summary?.created_at ? new Date(summary.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : ""}
+                {ext?.client_name && ` · Client: ${ext.client_name}`}
+                {ext?.duration_months && ` · ${ext.duration_months} months`}
               </p>
             </div>
           </div>
+          {totalSavings > 0 && (
+            <div style={{ textAlign: "right", background: C.orangeBg, border: `1px solid ${C.orangeBorder}`, borderRadius: 10, padding: "8px 14px" }}>
+              <p style={{ fontSize: 10, color: C.orange, fontWeight: 700, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Monthly Savings Potential</p>
+              <p style={{ fontFamily: FH, fontWeight: 800, fontSize: 18, color: C.orange, margin: 0 }}>
+                ${totalSavings.toLocaleString()}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Negotiation transcript */}
-        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #DBDBDB" }}>
-          <div className="px-5 py-4 flex items-center gap-2" style={{ background: "#FFFFFF", borderBottom: "1px solid #DBDBDB" }}>
-            <span className="text-sm font-bold" style={{ fontFamily: "'Raleway', sans-serif", color: "#09131b" }}>
-              Negotiation Transcript
-            </span>
-            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "#FFF8F0", color: "#F89738", border: "1px solid #FDDCB0" }}>
-              {summary?.chat.length} messages
-            </span>
-          </div>
-          <div className="divide-y divide-gray-200 overflow-y-auto max-h-[480px]">
-            {summary?.chat.map((msg, i) => (
-              <div key={i} className="px-5 py-4" style={{ background: msg.role === "agent" ? "#FFFFFF" : "#FAFAFA" }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                    style={{ background: msg.role === "agent" ? "#F89738" : "#09131b", flexShrink: 0 }}>
-                    {msg.role === "agent" ? "AI" : "You"}
-                  </span>
-                  <span className="text-xs font-semibold" style={{ color: "#8B8B8B" }}>
-                    {msg.role === "agent" ? "Negotiation Agent" : "Vendor / User"}
-                  </span>
-                </div>
-                <div className="pl-8">
-                  <PlainText text={msg.content} />
-                </div>
+        {/* ── CONTRACT INTELLIGENCE ────────────────────────────────────── */}
+        {ext && (
+          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+            <SectionHeader
+              icon="🔍"
+              title="Contract Intelligence"
+              subtitle="Roles, rates and payment terms extracted from the SOW"
+              badge={
+                <span style={{ fontSize: 10, fontWeight: 600, background: C.light, color: C.gray, border: `1px solid ${C.border}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
+                  AI Extracted
+                </span>
+              }
+            />
+
+            {/* Roles table */}
+            {ext.roles && ext.roles.length > 0 && (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <Th>Role Title</Th>
+                      <Th>Level</Th>
+                      <Th>FTE</Th>
+                      <Th>Proposed Rate ($/hr)</Th>
+                      <Th>Extraction Confidence</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ext.roles.map((role, i) => (
+                      <tr key={i} style={{ background: i % 2 === 0 ? C.white : "#FAFAFA" }}>
+                        <Td><strong style={{ fontFamily: FH }}>{role.title}</strong></Td>
+                        <Td>{role.level || "—"}</Td>
+                        <Td>{role.fte_count ?? "—"}</Td>
+                        <Td highlight>${role.hourly_rate}/hr</Td>
+                        <Td><ConfidenceBadge score={role.confidence} /></Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            )}
+
+            {/* Payment terms */}
+            <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>Payment Terms:</span>
+                <span style={{ fontFamily: FH, fontWeight: 700, fontSize: 13, color: C.dark }}>{ext.payment_terms?.schedule || "—"}</span>
+                {ext.payment_terms?.type && <span style={{ fontSize: 11, color: C.gray }}>({ext.payment_terms.type})</span>}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>Confidence:</span>
+                <ConfidenceBadge score={ext.payment_terms?.confidence ?? 0} />
+              </div>
+            </div>
+
+            {/* Key clauses */}
+            {ext.key_clauses && Object.values(ext.key_clauses).some(v => v) && (
+              <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px 24px" }}>
+                {Object.entries(ext.key_clauses).filter(([, v]) => v).map(([k, v]) => (
+                  <div key={k}>
+                    <span style={{ fontSize: 9, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      {k.replace(/_/g, " ")}:{" "}
+                    </span>
+                    <span style={{ fontSize: 11, color: C.dark, fontFamily: FB }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Extraction notes */}
+            {ext.extraction_notes && (
+              <div style={{ padding: "10px 20px", borderTop: `1px solid ${C.border}`, background: C.light }}>
+                <p style={{ fontSize: 11, color: C.gray, margin: 0, fontFamily: FB }}>
+                  <strong>Note:</strong> {ext.extraction_notes}
+                </p>
+              </div>
+            )}
           </div>
+        )}
+
+        {/* ── BENCHMARK ANALYSIS ───────────────────────────────────────── */}
+        {bench && bench.role_comparisons.length > 0 && (
+          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+            <SectionHeader
+              icon="📊"
+              title="Benchmark Analysis"
+              subtitle="How each proposed rate compares to internal benchmark data"
+              badge={
+                totalSavings > 0 ? (
+                  <span style={{ fontSize: 11, fontWeight: 700, background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
+                    ${totalSavings.toLocaleString()} /mo potential savings
+                  </span>
+                ) : undefined
+              }
+            />
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <Th>Role</Th>
+                    <Th>Vendor Rate</Th>
+                    <Th>Benchmark (P50)</Th>
+                    <Th>P75 Walk-away</Th>
+                    <Th>Position</Th>
+                    <Th>Delta vs Benchmark</Th>
+                    <Th>Monthly Exposure</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bench.role_comparisons.map((rc, i) => {
+                    const delta = rc.delta_from_median_pct ?? 0;
+                    const deltaColor = delta > 0 ? "#DC2626" : "#16A34A";
+                    return (
+                      <tr key={i} style={{ background: i % 2 === 0 ? C.white : "#FAFAFA" }}>
+                        <Td><strong style={{ fontFamily: FH }}>{rc.matched_benchmark || rc.title}</strong></Td>
+                        <Td highlight>${rc.proposed_rate}/hr</Td>
+                        <Td>{rc.p50 ? `$${rc.p50}/hr` : "—"}</Td>
+                        <Td>{rc.walk_away_rate ? `$${rc.walk_away_rate}/hr` : "—"}</Td>
+                        <Td><PositionBadge position={rc.market_position} /></Td>
+                        <Td>
+                          {delta !== 0 ? (
+                            <span style={{ fontSize: 12, fontWeight: 700, color: deltaColor, fontFamily: FB }}>
+                              {delta > 0 ? "+" : ""}{delta.toFixed(1)}%
+                            </span>
+                          ) : "At benchmark"}
+                        </Td>
+                        <Td>
+                          {(rc.monthly_cost_exposure ?? 0) > 0
+                            ? <span style={{ color: "#DC2626", fontWeight: 700, fontFamily: FB }}>${(rc.monthly_cost_exposure!).toLocaleString()}</span>
+                            : <span style={{ color: "#16A34A" }}>—</span>}
+                        </Td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Payment terms benchmark */}
+            {bench.payment_terms_assessment && (
+              <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>Payment Terms:</span>
+                  <span style={{ fontFamily: FH, fontWeight: 700, fontSize: 13, color: C.dark }}>{bench.payment_terms_assessment.proposed}</span>
+                  <span style={{ fontSize: 11, color: C.gray }}>(preferred: {bench.payment_terms_assessment.preferred})</span>
+                </div>
+                <PaymentStatusBadge status={bench.payment_terms_assessment.status} />
+                {bench.payment_terms_assessment.note && (
+                  <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>{bench.payment_terms_assessment.note}</span>
+                )}
+              </div>
+            )}
+
+            {/* Benchmark legend */}
+            <div style={{ padding: "10px 20px", borderTop: `1px solid ${C.border}`, background: C.light, display: "flex", gap: 20, flexWrap: "wrap" }}>
+              {[
+                { label: "P50 — Benchmark median (agent's opening target)", color: "#16A34A" },
+                { label: "P75 — Experienced range (agent's walk-away limit)", color: C.orange },
+              ].map(l => (
+                <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: l.color }} />
+                  <span style={{ fontSize: 10, color: C.gray, fontFamily: FB }}>{l.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── FINAL OFFER ──────────────────────────────────────────────── */}
+        {finalTermsMsg && (
+          <div style={{ background: C.white, border: `2px solid ${C.orangeBorder}`, borderRadius: 14, overflow: "hidden" }}>
+            <SectionHeader
+              icon="✅"
+              title="Final Negotiated Terms"
+              subtitle="Agreed terms extracted from the end of the negotiation"
+              badge={
+                <span style={{ fontSize: 10, fontWeight: 700, background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
+                  Ready for Approval
+                </span>
+              }
+            />
+            <div style={{ padding: "16px 20px" }}>
+              <PlainText text={finalTermsMsg} />
+            </div>
+          </div>
+        )}
+
+        {/* ── NEGOTIATION TRANSCRIPT (collapsible) ─────────────────────── */}
+        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+          <button
+            onClick={() => setShowTranscript(v => !v)}
+            style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+            <SectionHeader
+              icon="💬"
+              title="Full Negotiation Transcript"
+              subtitle={`${summary?.chat.length ?? 0} messages — click to ${showTranscript ? "collapse" : "expand"}`}
+              badge={
+                <span style={{ fontSize: 13, color: C.gray }}>{showTranscript ? "▲" : "▼"}</span>
+              }
+            />
+          </button>
+          {showTranscript && (
+            <div style={{ maxHeight: 480, overflowY: "auto" }}>
+              {summary?.chat.map((msg, i) => (
+                <div key={i} style={{ padding: "14px 20px", background: msg.role === "agent" ? C.white : "#FAFAFA", borderBottom: `1px solid ${C.border}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span style={{ width: 24, height: 24, borderRadius: "50%", background: msg.role === "agent" ? C.orange : C.dark, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: C.white, flexShrink: 0 }}>
+                      {msg.role === "agent" ? "AI" : "V"}
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: C.gray, fontFamily: FB }}>
+                      {msg.role === "agent" ? "Negotiation Agent" : "Vendor"}
+                    </span>
+                  </div>
+                  <div style={{ paddingLeft: 32 }}>
+                    <PlainText text={msg.content} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Approval form — only show if not yet decided */}
+        {/* ── APPROVAL FORM ────────────────────────────────────────────── */}
         {!existingApproval ? (
-          <div className="rounded-xl p-6 space-y-5" style={{ background: "#FFFFFF", border: "1px solid #DBDBDB", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "24px", display: "flex", flexDirection: "column", gap: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div>
-              <h2 className="font-bold text-base" style={{ fontFamily: "'Raleway', sans-serif", color: "#09131b" }}>
-                Buyer Decision
-              </h2>
-              <p className="text-xs mt-0.5" style={{ color: "#8B8B8B" }}>
-                Review the negotiation above and approve or reject the agreed terms
-              </p>
+              <h2 style={{ fontFamily: FH, fontWeight: 700, fontSize: 16, color: C.dark, margin: "0 0 4px" }}>Category Manager Decision</h2>
+              <p style={{ fontSize: 12, color: C.gray, margin: 0, fontFamily: FB }}>Review the contract intelligence, benchmark analysis and final terms above, then approve or reject</p>
             </div>
 
-            {/* Approver name */}
+            {/* Name */}
             <div>
-              <label className="text-[10px] uppercase tracking-widest block mb-1.5" style={{ color: "#8B8B8B" }}>
-                Your Name (optional)
-              </label>
-              <input
-                type="text"
-                value={approver}
-                onChange={e => setApprover(e.target.value)}
+              <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>Your Name (optional)</label>
+              <input type="text" value={approver} onChange={e => setApprover(e.target.value)}
                 placeholder="e.g. Jane Smith"
-                className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-                style={{ background: "#F4F4F4", border: "1px solid #DBDBDB", color: "#09131b", fontFamily: "'Montserrat', sans-serif" }}
-              />
+                style={{ width: "100%", background: C.light, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: C.dark, fontFamily: FB, outline: "none", boxSizing: "border-box" }} />
             </div>
 
-            {/* Decision buttons */}
+            {/* Decision */}
             <div>
-              <label className="text-[10px] uppercase tracking-widest block mb-2" style={{ color: "#8B8B8B" }}>
-                Decision
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setDecision("approved")}
-                  className="py-4 rounded-xl font-semibold text-sm transition-all"
-                  style={{
-                    border: decision === "approved" ? "2px solid #F89738" : "2px solid #DBDBDB",
-                    background: decision === "approved" ? "#FFF8F0" : "#FFFFFF",
-                    color: decision === "approved" ? "#F89738" : "#8B8B8B",
-                    fontFamily: "'Montserrat', sans-serif",
-                  }}
-                >
-                  ✓ Approve Terms
-                </button>
-                <button
-                  onClick={() => setDecision("rejected")}
-                  className="py-4 rounded-xl font-semibold text-sm transition-all"
-                  style={{
-                    border: decision === "rejected" ? "2px solid #09131b" : "2px solid #DBDBDB",
-                    background: decision === "rejected" ? "#F4F4F4" : "#FFFFFF",
-                    color: decision === "rejected" ? "#09131b" : "#8B8B8B",
-                    fontFamily: "'Montserrat', sans-serif",
-                  }}
-                >
-                  ✕ Reject Terms
-                </button>
+              <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>Decision</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                {(["approved", "rejected"] as const).map(d => (
+                  <button key={d} onClick={() => setDecision(d)}
+                    style={{
+                      padding: "16px 0", borderRadius: 12, fontFamily: FB, fontWeight: 700, fontSize: 14, cursor: "pointer",
+                      background: decision === d ? (d === "approved" ? C.orangeBg : C.light) : C.white,
+                      color:      decision === d ? (d === "approved" ? C.orange : C.dark) : C.gray,
+                      border:     `2px solid ${decision === d ? (d === "approved" ? C.orange : C.dark) : C.border}`,
+                    }}>
+                    {d === "approved" ? "✓ Approve Terms" : "✕ Reject Terms"}
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Comments */}
             <div>
-              <label className="text-[10px] uppercase tracking-widest block mb-1.5" style={{ color: "#8B8B8B" }}>
-                Comments {decision === "rejected" ? "(required)" : "(optional)"}
+              <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>
+                Comments {decision === "rejected" ? "(required)" : "(optional — helps the AI agent learn)"}
               </label>
-              <textarea
-                value={comments}
-                onChange={e => setComments(e.target.value)}
-                rows={4}
-                placeholder={
-                  decision === "rejected"
-                    ? "Please explain why the terms are being rejected and what changes are needed…"
-                    : "Any comments or conditions for approval…"
-                }
-                className="w-full rounded-lg px-4 py-3 text-sm resize-none focus:outline-none"
-                style={{
-                  background: "#F4F4F4",
-                  border: "1px solid #DBDBDB",
-                  color: "#09131b",
-                  fontFamily: "'Montserrat', sans-serif",
-                }}
-              />
+              <textarea value={comments} onChange={e => setComments(e.target.value)} rows={4}
+                placeholder={decision === "rejected" ? "Explain why you are rejecting these terms and what changes are needed…" : "Any conditions, feedback or notes for the agent to learn from…"}
+                style={{ width: "100%", background: C.light, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: C.dark, fontFamily: FB, resize: "none", outline: "none", boxSizing: "border-box" }} />
             </div>
 
             {/* Submit */}
-            <button
-              onClick={handleSubmit}
+            <button onClick={handleSubmit}
               disabled={!decision || (decision === "rejected" && !comments.trim()) || submitting}
-              className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all"
               style={{
-                background: decision && !(decision === "rejected" && !comments.trim()) ? "#F89738" : "#F4F4F4",
-                color: decision && !(decision === "rejected" && !comments.trim()) ? "#FFFFFF" : "#BBBBBB",
-                cursor: decision && !(decision === "rejected" && !comments.trim()) ? "pointer" : "not-allowed",
-                fontFamily: "'Montserrat', sans-serif",
-              }}
-            >
+                width: "100%", padding: "14px 0", borderRadius: 12, border: "none",
+                fontFamily: FB, fontWeight: 700, fontSize: 14, cursor: decision ? "pointer" : "not-allowed",
+                background: decision && !(decision === "rejected" && !comments.trim()) ? C.orange : C.border,
+                color:      decision && !(decision === "rejected" && !comments.trim()) ? C.white : C.gray,
+              }}>
               {submitting ? "Submitting…" : decision === "approved" ? "Confirm Approval" : decision === "rejected" ? "Submit Rejection" : "Select a Decision Above"}
             </button>
 
-            <p className="text-xs text-center" style={{ color: "#BBBBBB" }}>
-              Your decision will be recorded and used to improve future negotiations
+            <p style={{ fontSize: 11, color: C.border, textAlign: "center", margin: 0, fontFamily: FB }}>
+              Your decision and comments are saved and used to improve future AI negotiations
             </p>
           </div>
         ) : (
-          /* Already decided — show decision summary */
-          <div className="rounded-xl p-6" style={{ background: "#FFFFFF", border: "1px solid #DBDBDB" }}>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                style={{ background: existingApproval.decision === "approved" ? "#FFF8F0" : "#F4F4F4" }}>
+          /* Already decided */
+          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: existingApproval.decision === "approved" ? C.orangeBg : C.light, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
                 {existingApproval.decision === "approved" ? "✓" : "✕"}
-              </span>
+              </div>
               <div>
-                <p className="font-bold text-sm" style={{ fontFamily: "'Raleway', sans-serif", color: "#09131b" }}>
+                <p style={{ fontFamily: FH, fontWeight: 700, fontSize: 14, color: C.dark, margin: 0 }}>
                   Terms {existingApproval.decision === "approved" ? "Approved" : "Rejected"}
                 </p>
-                <p className="text-xs" style={{ color: "#8B8B8B" }}>
+                <p style={{ fontSize: 11, color: C.gray, margin: "2px 0 0", fontFamily: FB }}>
                   {existingApproval.approver && `By ${existingApproval.approver} · `}
                   {new Date(existingApproval.timestamp).toLocaleString()}
                 </p>
               </div>
             </div>
             {existingApproval.comments && (
-              <p className="text-sm p-3 rounded-lg" style={{ background: "#F4F4F4", color: "#09131b" }}>
+              <p style={{ fontSize: 13, background: C.light, borderRadius: 8, padding: "10px 14px", color: C.dark, margin: 0, fontFamily: FB }}>
                 "{existingApproval.comments}"
               </p>
             )}
           </div>
         )}
+
+        {/* Footer */}
+        <p style={{ textAlign: "center", fontSize: 11, color: C.border, fontFamily: FB, paddingBottom: 8 }}>
+          AI Powered Contract Negotiation · MResult
+        </p>
       </div>
     </div>
   );

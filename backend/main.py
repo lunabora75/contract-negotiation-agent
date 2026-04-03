@@ -190,6 +190,9 @@ def initiate_negotiation(session_id: str):
         session["messages"] = msgs
         session["chat"]     = [{"role": "agent", "content": reply}]
         session["status"]   = S_NEG_IN_PROGRESS
+        # Store extraction + benchmark data for explainability on approval page
+        if agent.captured_tools:
+            session["analysis"] = agent.captured_tools
 
     last_msg = session["chat"][-1]["content"] if session.get("chat") else ""
     return {
@@ -225,6 +228,18 @@ def chat_turn(session_id: str, body: ChatRequest):
         "negotiation_complete": complete,
         "status":               session["status"],
     }
+
+
+@app.get("/api/sessions/{session_id}/analysis")
+def get_analysis(session_id: str):
+    """Return extraction + benchmark analysis for the explainability panel on the approval page."""
+    session = SESSIONS.get(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+    analysis = session.get("analysis")
+    if not analysis:
+        raise HTTPException(404, "No analysis data available — negotiation may not have started yet.")
+    return analysis
 
 
 @app.get("/api/sessions/{session_id}/summary")
