@@ -1,14 +1,8 @@
 """
 Single NegotiationAgent — one Claude agent, three tools.
 
-Tool use flow:
-  1. extract_sow_data   → parse roles / rates / payment terms from SOW text
-  2. lookup_benchmarks  → compare each role against internal synthetic benchmarks
-  3. save_feedback      → persist post-session feedback for ongoing agent learning
-
-Benchmark data and feedback both live in data_store.py (single source of truth).
-The agent's system prompt is enriched with learning context from past sessions
-so it continuously improves its negotiation effectiveness.
+The agent negotiates directly WITH the vendor/supplier on behalf of the buyer.
+Tone: professional, direct, firm — backed by market benchmark data.
 """
 
 import json
@@ -18,7 +12,7 @@ from typing import Any
 import anthropic
 from data_store import lookup_benchmark, lookup_payment_terms, save_feedback, get_learning_context
 
-# ── Anthropic client (lazy) ──────────────────────────────────────────────
+# ── Anthropic client ─────────────────────────────────────────────────────
 _client: anthropic.Anthropic | None = None
 
 def _get_client() -> anthropic.Anthropic:
@@ -55,10 +49,10 @@ TOOLS: list[dict] = [
                         "type": "object",
                         "properties": {
                             "title":       { "type": "string" },
-                            "level":       { "type": "string", "description": "e.g. Senior, Lead, Junior" },
+                            "level":       { "type": "string" },
                             "fte_count":   { "type": "number" },
                             "hourly_rate": { "type": "number" },
-                            "confidence":  { "type": "number", "description": "0 to 1" },
+                            "confidence":  { "type": "number" },
                         },
                         "required": ["title", "hourly_rate", "confidence"],
                     },
@@ -66,8 +60,8 @@ TOOLS: list[dict] = [
                 "payment_terms": {
                     "type": "object",
                     "properties": {
-                        "schedule":         { "type": "string", "description": "e.g. Net 30" },
-                        "type":             { "type": "string", "description": "T&M / Fixed / Milestone" },
+                        "schedule":         { "type": "string" },
+                        "type":             { "type": "string" },
                         "late_penalty_pct": { "type": "number" },
                         "confidence":       { "type": "number" },
                     },
@@ -92,8 +86,7 @@ TOOLS: list[dict] = [
         "description": (
             "Compare extracted roles and payment terms against the internal "
             "synthetic benchmark database. Returns p25/p50/p75/p90 percentile bands, "
-            "the market position of each proposed rate, delta from median, "
-            "recommended target and walk-away rates, and a payment-terms assessment."
+            "market position, delta from median, target and walk-away rates."
         ),
         "input_schema": {
             "type": "object",
@@ -109,10 +102,7 @@ TOOLS: list[dict] = [
                         "required": ["title", "proposed_rate"],
                     },
                 },
-                "payment_schedule": {
-                    "type": "string",
-                    "description": "e.g. Net 30 — benchmarked against industry standard",
-                },
+                "payment_schedule": { "type": "string" },
             },
             "required": ["roles"],
         },
@@ -120,15 +110,13 @@ TOOLS: list[dict] = [
     {
         "name": "save_feedback",
         "description": (
-            "Persist human feedback after a completed negotiation session. "
-            "This data is stored in the internal data store and used to enrich "
-            "the agent's system prompt in future sessions, enabling continuous learning."
+            "Persist feedback after a completed negotiation session for agent learning."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
-                "rating":      { "type": "integer", "description": "1 (poor) to 5 (excellent)" },
-                "outcome":     { "type": "string",  "enum": ["agreed", "partial", "no_deal"] },
+                "rating":      { "type": "integer" },
+                "outcome":     { "type": "string", "enum": ["agreed", "partial", "no_deal"] },
                 "what_worked": { "type": "string" },
                 "what_didnt":  { "type": "string" },
                 "notes":       { "type": "string" },
@@ -144,7 +132,7 @@ TOOLS: list[dict] = [
 
 def _execute_tool(name: str, inputs: dict) -> Any:
     if name == "extract_sow_data":
-        return inputs           # model did the extraction; return as-is
+        return inputs
 
     if name == "lookup_benchmarks":
         comparisons = [
@@ -175,54 +163,60 @@ def _execute_tool(name: str, inputs: dict) -> Any:
     raise ValueError(f"Unknown tool: {name}")
 
 # ═══════════════════════════════════════════════════════════════════════════
-# SYSTEM PROMPT  (refreshed each session to include latest learning context)
+# SYSTEM PROMPT
 # ═══════════════════════════════════════════════════════════════════════════
 
 _SYSTEM_BASE = """\
-You are a professional contract negotiation agent specialising in IT \
-professional-services Statements of Work (SOWs) for MResult, a technology \
-consulting firm.
+You are a senior commercial negotiator representing the buyer in a contract \
+negotiation with a vendor who has submitted a Statement of Work (SOW) for \
+professional IT services. You are speaking directly to the vendor.
 
-## Your Mandate
-Protect the client's commercial interests by negotiating fair, market-aligned \
-rates and payment terms for every role in the SOW.
+## Your Role
+You negotiate on behalf of the buyer to secure fair, market-aligned rates and \
+payment terms. You are professional, direct, and firm. You do not advise — \
+you negotiate. Every position you take must be backed by market data.
 
 ## Workflow — follow this order on every new SOW
-1. Call **extract_sow_data** to pull structured data from the document.
+1. Call **extract_sow_data** to parse the document.
 2. Call **lookup_benchmarks** with the extracted roles and payment schedule.
-3. Present a clear opening assessment: which roles are above/at/below market, \
-   the total monthly cost exposure, and your negotiation priorities.
-4. Negotiate interactively — one or two items per turn, concise and data-driven.
-5. When all items are resolved, present a summary table and explicitly invite \
-   the user to rate the session.
+3. Open negotiations: introduce yourself, summarise what you reviewed, and \
+   present your counter-offer for each item that is above market. Be specific \
+   and cite benchmark data.
+4. Negotiate item by item — keep turns focused and professional.
+5. Once all items are resolved, present the **Final Agreed Terms** in a clean \
+   summary table and state that the agreement will be sent to the buyer for \
+   formal approval.
 
 ## Negotiation Principles
 | Principle | Detail |
 |---|---|
-| **Target rate** | p50 (market median) — this is the goal for every role |
-| **Walk-away** | p75 for standard roles; p90 for specialist/niche roles |
-| **Payment terms** | Net 30 is the industry standard; flag anything beyond Net 45 |
-| **Evidence first** | Always cite the specific benchmark delta, e.g. "+28 % above p50" |
-| **Tone** | Professional, collaborative, never combative |
-| **Tracking** | Maintain a live tally of agreed / in-progress / outstanding items |
+| **Opening offer** | p50 (market median) — your first counter for every above-market role |
+| **Maximum concession** | p75 for standard roles; p90 only for rare specialist roles |
+| **Payment terms** | Net 30 is standard; propose Net 30 if vendor asks for Net 45+ |
+| **Evidence** | Always cite the benchmark delta, e.g. "our data shows this rate is 28% above market median" |
+| **Tone** | Direct and professional — no hedging, no filler. State your position clearly |
+| **Closure** | Do not drag negotiations. If vendor agrees within walk-away, accept and close |
 
 ## Response Format
-- Use **bold** for role names and key figures
-- Bullet each rate comparison: `Role → Proposed $X | Target $Y | Delta +Z%`
-- End every turn with a clear next proposal or question
-- When negotiation concludes: show a results summary table, then request feedback
+- Address the vendor directly (e.g. "Thank you for submitting your SOW…")
+- Use **bold** for role names, rates, and key figures
+- Present counter-offers in this format:
+  `Role | Vendor Rate | Our Offer | Market Median`
+- Keep each turn concise — one clear position or question per message
+- When all items are agreed: output a **Final Agreed Terms** table, then state \
+  the summary will be forwarded to the buyer for approval
 
 ## Tools
 | Tool | When to call |
 |---|---|
-| `extract_sow_data` | Very first message — extract structure from the SOW |
-| `lookup_benchmarks` | Immediately after extraction — get market data |
-| `save_feedback` | Only when the user explicitly submits their rating |
+| `extract_sow_data` | First message only — parse the SOW |
+| `lookup_benchmarks` | Immediately after extraction |
+| `save_feedback` | Only when buyer approval feedback is explicitly submitted |
 """
 
 
 def _build_system() -> str:
-    learning = get_learning_context()   # reads from data_store — grows over time
+    learning = get_learning_context()
     return _SYSTEM_BASE + learning
 
 
@@ -231,36 +225,20 @@ def _build_system() -> str:
 # ═══════════════════════════════════════════════════════════════════════════
 
 class NegotiationAgent:
-    """
-    Single agent that drives the full SOW negotiation lifecycle via tool_use.
-    Internally loops until Claude produces a text reply (no pending tool calls).
-    """
-
     def run_turn(
         self,
         messages: list[dict],
         sow_text: str | None = None,
     ) -> tuple[str, list[dict]]:
-        """
-        Run one conversational turn (may involve multiple internal tool calls).
-
-        Args:
-            messages:  Existing Claude-format conversation history.
-            sow_text:  Raw SOW document — supply only on the very first turn.
-
-        Returns:
-            (reply_text, updated_messages_list)
-        """
         msgs = list(messages)
 
-        # First turn: inject the SOW document as the user's opening message
         if sow_text and not msgs:
             msgs.append({
                 "role": "user",
                 "content": (
-                    "Please analyse the following Statement of Work, then open the "
-                    "negotiation. Start by extracting the data, benchmark the rates, "
-                    "and give me your assessment and opening position.\n\n"
+                    "Please review the following Statement of Work and open the negotiation "
+                    "directly with the vendor. Extract the data, benchmark the rates, then "
+                    "present your counter-offer clearly and professionally.\n\n"
                     f"---BEGIN SOW---\n{sow_text}\n---END SOW---"
                 ),
             })
@@ -268,7 +246,6 @@ class NegotiationAgent:
         client = _get_client()
         system = _build_system()
 
-        # Agentic loop: keep going until stop_reason is not "tool_use"
         while True:
             response = client.messages.create(
                 model      = MODEL,
@@ -282,13 +259,11 @@ class NegotiationAgent:
             msgs.append({"role": "assistant", "content": assistant_blocks})
 
             if response.stop_reason != "tool_use":
-                # Extract all text blocks and join them
                 reply = " ".join(
                     b.text for b in assistant_blocks if hasattr(b, "text")
                 ).strip()
                 return reply, msgs
 
-            # Execute every tool the model requested, collect results
             tool_results = []
             for block in assistant_blocks:
                 if not (hasattr(block, "type") and block.type == "tool_use"):

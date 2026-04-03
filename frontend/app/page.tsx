@@ -19,25 +19,6 @@ const fmtBytes = (n: number) =>
 
 const fileExt = (name: string) => name.split(".").pop()?.toLowerCase() ?? "";
 
-// ── MResult logo SVG (inline, brand-compliant full-color) ──────────────────
-function MResultLogo({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 220 60" className={className} xmlns="http://www.w3.org/2000/svg" aria-label="MResult">
-      {/* Left wing */}
-      <path d="M18 44 C8 44 4 36 8 28 C12 20 22 18 26 26 Z" fill="#1a1a1a" />
-      {/* Right wing */}
-      <path d="M38 44 C48 44 52 36 48 28 C44 20 34 18 30 26 Z" fill="#1a1a1a" />
-      {/* Orange circle */}
-      <circle cx="28" cy="20" r="10" fill="#F89738" />
-      {/* M — gray */}
-      <text x="58" y="42" fontFamily="'Raleway', sans-serif" fontWeight="700" fontSize="28" fill="#8B8B8B">M</text>
-      {/* Result — black */}
-      <text x="84" y="42" fontFamily="'Raleway', sans-serif" fontWeight="700" fontSize="28" fill="#1a1a1a">Result</text>
-      {/* ® mark */}
-      <text x="200" y="20" fontFamily="sans-serif" fontSize="10" fill="#8B8B8B">®</text>
-    </svg>
-  );
-}
 
 // ── Markdown-lite renderer ─────────────────────────────────────────────────
 function MdContent({ text }: { text: string }) {
@@ -334,8 +315,9 @@ export default function Home() {
   const [input, setInput]               = useState("");
   const [loading, setLoading]           = useState(false);
   const [analysing, setAnalysing]       = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedbackDone, setFeedbackDone] = useState(false);
+  const [showFeedback,    setShowFeedback]    = useState(false);
+  const [feedbackDone,    setFeedbackDone]    = useState(false);
+  const [negotiationDone, setNegotiationDone] = useState(false);
   const [online, setOnline]             = useState<boolean | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -358,6 +340,7 @@ export default function Home() {
     setSessionId(null);
     setShowFeedback(false);
     setFeedbackDone(false);
+    setNegotiationDone(false);
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -370,7 +353,7 @@ export default function Home() {
       setSessionId(data.session_id);
       setFilename(data.filename);
       setMessages([{ role: "agent", content: data.reply }]);
-      if (data.negotiation_complete) setShowFeedback(true);
+      if (data.negotiation_complete) { setShowFeedback(true); setNegotiationDone(true); }
     } catch (e) {
       setMessages([{ role: "agent", content: `⚠️ ${e instanceof Error ? e.message : "Unknown error"}` }]);
     } finally {
@@ -391,7 +374,7 @@ export default function Home() {
       });
       const data = await res.json();
       setMessages(p => [...p, { role: "agent", content: data.reply }]);
-      if (data.negotiation_complete && !feedbackDone) setShowFeedback(true);
+      if (data.negotiation_complete && !feedbackDone) { setShowFeedback(true); setNegotiationDone(true); }
     } catch {
       setMessages(p => [...p, { role: "agent", content: "⚠️ Network error — please try again." }]);
     } finally {
@@ -428,18 +411,15 @@ export default function Home() {
       <header className="sticky top-0 z-50" style={{ background: "#FFFFFF", borderBottom: "1px solid #DBDBDB" }}>
         <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
 
-          {/* Left: Logo + app name */}
+          {/* Left: Name + app title */}
           <div className="flex items-center gap-4">
-            <MResultLogo className="h-9 w-auto" />
+            <span className="font-heading font-bold text-xl" style={{ color: "#09131b" }}>
+              MResult
+            </span>
             <div className="h-5 w-px" style={{ background: "#DBDBDB" }} />
-            <div>
-              <span className="font-heading font-bold text-base" style={{ color: "#09131b" }}>
-                Contract Negotiation
-              </span>
-              <span className="hidden sm:inline text-xs font-body ml-2" style={{ color: "#8B8B8B" }}>
-                SOW Intelligence
-              </span>
-            </div>
+            <span className="font-heading font-bold text-base" style={{ color: "#09131b" }}>
+              Contract Negotiation
+            </span>
           </div>
 
           {/* Right: status */}
@@ -627,6 +607,32 @@ export default function Home() {
                 onSubmit={submitFeedback}
                 onDismiss={() => { setShowFeedback(false); setFeedbackDone(true); }}
               />
+            )}
+
+            {/* Buyer Approval button — shown when negotiation is complete */}
+            {negotiationDone && sessionId && (
+              <div className="rounded-xl p-5" style={{ background: "#FFFFFF", border: "1px solid #FDDCB0" }}>
+                <div className="flex items-start gap-3 mb-4">
+                  <span className="text-2xl">📋</span>
+                  <div>
+                    <p className="font-heading font-bold text-sm" style={{ color: "#09131b" }}>
+                      Send for Buyer Approval
+                    </p>
+                    <p className="text-xs mt-0.5 font-body" style={{ color: "#8B8B8B" }}>
+                      Negotiation is complete. Open the approval page to share with the buyer for a formal decision.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => window.open(`/approval/${sessionId}`, "_blank")}
+                  className="w-full py-3 rounded-lg font-body font-semibold text-sm transition-all"
+                  style={{ background: "#F89738", color: "#FFFFFF" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "#e07e20")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "#F89738")}
+                >
+                  Open Approval Page ↗
+                </button>
+              </div>
             )}
 
             <div ref={bottomRef} />

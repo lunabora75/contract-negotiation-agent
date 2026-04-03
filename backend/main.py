@@ -1,11 +1,11 @@
 """
-FastAPI backend — single-agent contract negotiation (v2).
-Accepts uploaded SOW files (PDF, DOCX, TXT) for analysis.
+FastAPI backend — single-agent contract negotiation.
 """
 
 import io
 import os
 import uuid
+import datetime
 from pathlib import Path
 from typing import Dict
 
@@ -18,8 +18,8 @@ load_dotenv()
 
 from agent import NegotiationAgent
 
-# ── app ──────────────────────────────────────────────────────────────────
-app = FastAPI(title="Contract Negotiation Agent", version="2.0.0")
+# ── app ───────────────────────────────────────────────────────────────────
+app = FastAPI(title="Contract Negotiation Agent", version="3.0.0")
 
 _cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 app.add_middleware(
@@ -30,10 +30,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── session store ────────────────────────────────────────────────────────
+# ── session store ─────────────────────────────────────────────────────────
 SESSIONS: Dict[str, dict] = {}
 
-# ── file text extraction ─────────────────────────────────────────────────
+# ── file text extraction ──────────────────────────────────────────────────
 def _extract_text(filename: str, content: bytes) -> str:
     ext = Path(filename).suffix.lower()
 
@@ -47,7 +47,7 @@ def _extract_text(filename: str, content: bytes) -> str:
                 raise ValueError("PDF appears to be scanned/image-only — no extractable text found.")
             return text
         except ImportError:
-            raise HTTPException(500, "pypdf is not installed. Run: pip install pypdf")
+            raise HTTPException(500, "pypdf is not installed.")
 
     if ext in (".docx",):
         try:
@@ -56,29 +56,26 @@ def _extract_text(filename: str, content: bytes) -> str:
             paras = [p.text for p in doc.paragraphs if p.text.strip()]
             return "\n".join(paras)
         except ImportError:
-            raise HTTPException(500, "python-docx is not installed. Run: pip install python-docx")
+            raise HTTPException(500, "python-docx is not installed.")
 
     if ext in (".txt", ".md", ""):
         return content.decode("utf-8", errors="replace")
 
-    raise HTTPException(
-        415,
-        f"Unsupported file type '{ext}'. Please upload a PDF, DOCX, or TXT file."
-    )
+    raise HTTPException(415, f"Unsupported file type '{ext}'. Please upload PDF, DOCX, or TXT.")
 
-# ── negotiation-complete heuristic ───────────────────────────────────────
+# ── negotiation-complete heuristic ────────────────────────────────────────
 def _negotiation_complete(reply: str) -> bool:
     markers = [
-        "feedback", "rate this session", "how would you rate",
+        "final agreed terms", "forwarded to the buyer", "sent to the buyer",
+        "buyer for approval", "buyer for formal approval",
         "negotiation is complete", "summary of outcomes",
-        "final terms", "we have reached agreement", "session complete",
-        "please provide your feedback", "i'd welcome your feedback",
-        "i would love your feedback", "would you be willing to rate",
+        "we have reached agreement", "session complete",
+        "all items have been agreed", "agreement has been reached",
     ]
     low = reply.lower()
     return any(m in low for m in markers)
 
-# ── request models ────────────────────────────────────────────────────────
+# ── request models ─────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     message: str
 
@@ -89,7 +86,12 @@ class FeedbackRequest(BaseModel):
     what_didnt:  str = ""
     notes:       str = ""
 
-# ── routes ────────────────────────────────────────────────────────────────
+class ApprovalRequest(BaseModel):
+    decision:  str        # "approved" or "rejected"
+    comments:  str = ""
+    approver:  str = ""
+
+# ── routes ─────────────────────────────────────────────────────────────────
 @app.get("/api/health")
 def health():
     return {"status": "ok", "model": os.getenv("MODEL", "claude-sonnet-4-5")}
@@ -97,16 +99,12 @@ def health():
 
 @app.post("/api/sessions")
 async def create_session(file: UploadFile = File(...)):
-    """
-    Accept an uploaded SOW file (PDF / DOCX / TXT), extract its text,
-    run the negotiation agent, and return the opening message.
-    """
     content  = await file.read()
     filename = file.filename or "upload.txt"
 
     if len(content) == 0:
         raise HTTPException(400, "Uploaded file is empty.")
-    if len(content) > 10 * 1024 * 1024:          # 10 MB guard
+    if len(content) > 10 * 1024 * 1024:
         raise HTTPException(413, "File too large. Maximum size is 10 MB.")
 
     sow_text = _extract_text(filename, content)
@@ -120,6 +118,8 @@ async def create_session(file: UploadFile = File(...)):
         "filename":   filename,
         "messages":   msgs,
         "chat":       [{"role": "agent", "content": reply}],
+        "approval":   None,
+        "created_at": datetime.datetime.utcnow().isoformat(),
     }
 
     return {
@@ -149,6 +149,58 @@ def chat_turn(session_id: str, body: ChatRequest):
         "reply":                reply,
         "negotiation_complete": _negotiation_complete(reply),
     }
+
+
+@app.get("/api/sessions/{session_id}/summary")
+def get_summary(session_id: str):
+    """Return the full negotiation transcript for the buyer approval page."""
+    session = SESSIONS.get(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+    return {
+        "session_id": session_id,
+        "filename":   session.get("filename", ""),
+        "chat":       session.get("chat", []),
+        "approval":   session.get("approval"),
+        "created_at": session.get("created_at", ""),
+    }
+
+
+@app.post("/api/sessions/{session_id}/approval")
+def submit_approval(session_id: str, body: ApprovalRequest):
+    """Buyer approves or rejects the negotiated terms. Saved for agent learning."""
+    session = SESSIONS.get(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+
+    decision = body.decision.lower()
+    if decision not in ("approved", "rejected"):
+        raise HTTPException(400, "decision must be 'approved' or 'rejected'")
+
+    session["approval"] = {
+        "decision":  decision,
+        "comments":  body.comments,
+        "approver":  body.approver,
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+    }
+
+    # Translate approval decision into agent feedback for learning
+    rating  = 5 if decision == "approved" else 2
+    outcome = "agreed" if decision == "approved" else "no_deal"
+    feedback_msg = (
+        f"Buyer approval decision received: {decision.upper()}. "
+        f"Approver: {body.approver or 'anonymous'}. "
+        f"Comments: {body.comments or 'none'}. "
+        f"Please call the save_feedback tool with rating={rating}, "
+        f"outcome='{outcome}', notes='{body.comments}'"
+    )
+    agent = NegotiationAgent()
+    _, updated = agent.run_turn(
+        session["messages"] + [{"role": "user", "content": feedback_msg}]
+    )
+    session["messages"] = updated
+
+    return {"saved": True, "decision": decision}
 
 
 @app.post("/api/sessions/{session_id}/feedback")
