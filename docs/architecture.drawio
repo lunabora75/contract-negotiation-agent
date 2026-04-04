@@ -1,0 +1,248 @@
+<mxfile host="app.diagrams.net" modified="2026-04-04T00:00:00.000Z" agent="Claude" version="21.0.0">
+  <diagram id="solution_arch" name="Solution &amp; Technical Architecture">
+    <mxGraphModel dx="1800" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- TITLE BAR -->
+        <mxCell id="title_bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#09131b;strokeColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="50" y="20" width="1800" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="title_text" value="MResult — AI Contract Negotiation Agent  |  Solution &amp; Technical Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="50" y="20" width="1800" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="title_bar_accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F89738;strokeColor=#F89738;" vertex="1" parent="1">
+          <mxGeometry x="50" y="70" width="1800" height="4" as="geometry" />
+        </mxCell>
+
+        <!-- PERSONA: Category Manager -->
+        <mxCell id="cm_box" value="👤 Category Manager&#xa;&#xa;• Uploads SOW / contract&#xa;• Triggers AI negotiation&#xa;• Reviews &amp; approves terms&#xa;• Provides feedback to agent" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#09131b;strokeColor=#09131b;fontColor=#FFFFFF;fontSize=11;verticalAlign=top;align=center;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="230" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- PERSONA: Vendor -->
+        <mxCell id="vendor_box" value="👤 Vendor / Supplier&#xa;&#xa;• Views active SOW negotiations&#xa;• Chats with AI negotiation agent&#xa;• Counter-offers and agrees terms&#xa;• Receives completion notice" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#F89738;strokeColor=#F89738;fontColor=#09131b;fontSize=11;verticalAlign=top;align=center;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1590" y="100" width="230" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- ═══════════════════ FRONTEND LAYER ═══════════════════ -->
+        <mxCell id="fe_layer" value="Frontend Layer — Next.js 15 · React 19 · TypeScript · Tailwind CSS · Deployed on Vercel" style="swimlane;startSize=32;fillColor=#FFF8F0;strokeColor=#F89738;strokeWidth=2;fontStyle=1;fontSize=12;fontColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="50" y="265" width="1800" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_landing" value="🏠 Landing Page&#xa;&#xa;• Persona selection&#xa;  (Category Manager / Vendor)&#xa;• How it Works tab&#xa;• Benchmark criteria tab&#xa;  (P25 / P50 / P75 / P90 explained)" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#DBDBDB;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="fe_layer">
+          <mxGeometry x="25" y="45" width="220" height="145" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_manager" value="📁 Category Manager Portal&#xa;&#xa;• Drag &amp; drop SOW upload&#xa;  (PDF / DOCX / TXT, max 10 MB)&#xa;• My Contracts table with 9 statuses&#xa;• Pending Approvals queue&#xa;• 'Send to AI Agent for Negotiation'&#xa;• Filter by status" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#09131b;strokeWidth=2;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="fe_layer">
+          <mxGeometry x="275" y="45" width="265" height="145" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_approval" value="✅ Contract Approval Page&#xa;&#xa;• Contract Intelligence (extraction confidence)&#xa;• Benchmark Analysis (p50/p75 comparison)&#xa;• Final Negotiated Terms&#xa;• Full Negotiation Transcript&#xa;• Decision: Approve / Re-negotiate / Offline Review&#xa;• Mandatory CM comments (agent learning)" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#09131b;strokeWidth=2;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="fe_layer">
+          <mxGeometry x="570" y="45" width="300" height="145" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_vendor" value="💬 Vendor Portal&#xa;&#xa;• Available SOW session picker&#xa;  (per-SOW connecting state)&#xa;• Full-width negotiation chat&#xa;• AI counter-offer tables&#xa;  (Benchmark / Delta from Benchmark cols)&#xa;• Completion &amp; approval notice" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F89738;strokeWidth=2;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="fe_layer">
+          <mxGeometry x="1305" y="45" width="265" height="145" as="geometry" />
+        </mxCell>
+
+        <!-- ═══════════════════ BACKEND API LAYER ═══════════════════ -->
+        <mxCell id="be_layer" value="Backend API Layer — FastAPI · Python 3.12 · Uvicorn · Deployed on Railway" style="swimlane;startSize=32;fillColor=#F0F6FF;strokeColor=#4A90D9;strokeWidth=2;fontStyle=1;fontSize=12;fontColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="50" y="510" width="1800" height="185" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be_upload" value="POST /api/sessions&#xa;&#xa;Upload SOW file&#xa;Extract text (PDF/DOCX/TXT)&#xa;Create session (status: uploaded)" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4A90D9;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=center;arcSize=6;" vertex="1" parent="be_layer">
+          <mxGeometry x="25" y="45" width="185" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be_trigger" value="POST /{id}/trigger&#xa;&#xa;CM sends SOW to agent&#xa;(or re-triggers re-negotiation)&#xa;Resets chat for re-neg&#xa;Status → sent_for_negotiation" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4A90D9;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=center;arcSize=6;" vertex="1" parent="be_layer">
+          <mxGeometry x="230" y="45" width="185" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be_initiate" value="POST /{id}/initiate&#xa;&#xa;Vendor connects to session&#xa;Agent runs opening turn&#xa;Injects re-neg reason if set&#xa;Status → negotiation_in_progress" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4A90D9;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=center;arcSize=6;" vertex="1" parent="be_layer">
+          <mxGeometry x="435" y="45" width="185" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be_chat" value="POST /{id}/chat&#xa;&#xa;Vendor sends message&#xa;Agent generates reply&#xa;Detects negotiation complete&#xa;Status → pending_approval" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4A90D9;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=center;arcSize=6;" vertex="1" parent="be_layer">
+          <mxGeometry x="640" y="45" width="185" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be_approval" value="POST /{id}/approval&#xa;&#xa;3 decisions: approved /&#xa;renegotiate / offline_review&#xa;Saves CM feedback for learning&#xa;Updates contract status" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4A90D9;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=center;arcSize=6;" vertex="1" parent="be_layer">
+          <mxGeometry x="845" y="45" width="185" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be_summary" value="GET /{id}/summary&#xa;&#xa;Full chat transcript&#xa;Session metadata&#xa;Approval decision&#xa;Used by approval page" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4A90D9;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=center;arcSize=6;" vertex="1" parent="be_layer">
+          <mxGeometry x="1050" y="45" width="185" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be_analysis" value="GET /{id}/analysis&#xa;&#xa;Extraction output&#xa;Benchmark comparison data&#xa;Confidence scores&#xa;Explainability for CM" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4A90D9;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=center;arcSize=6;" vertex="1" parent="be_layer">
+          <mxGeometry x="1255" y="45" width="185" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be_list" value="GET /api/sessions&#xa;&#xa;List all sessions&#xa;with status + approval&#xa;Used by both portals&#xa;Auto-refreshes every 8–10s" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4A90D9;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=center;arcSize=6;" vertex="1" parent="be_layer">
+          <mxGeometry x="1460" y="45" width="185" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- ═══════════════════ AI AGENT LAYER ═══════════════════ -->
+        <mxCell id="agent_layer" value="AI Agent Layer — Single NegotiationAgent · Claude Sonnet (claude-sonnet-4-5) · Anthropic Tool Use" style="swimlane;startSize=32;fillColor=#FFF8F0;strokeColor=#F89738;strokeWidth=2;fontStyle=1;fontSize=12;fontColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="50" y="730" width="1800" height="220" as="geometry" />
+        </mxCell>
+
+        <mxCell id="agent_core" value="🤖 NegotiationAgent&#xa;&#xa;Senior commercial negotiator.&#xa;Speaks directly to vendor.&#xa;Every position backed by&#xa;internal benchmark data.&#xa;&#xa;Learns from CM feedback via&#xa;dynamic system prompt suffix.&#xa;&#xa;Re-negotiation context injected&#xa;when contract is returned by CM." style="rounded=12;whiteSpace=wrap;html=1;fillColor=#09131b;strokeColor=#09131b;fontColor=#FFFFFF;fontSize=11;verticalAlign=top;align=center;arcSize=8;" vertex="1" parent="agent_layer">
+          <mxGeometry x="25" y="45" width="270" height="155" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tool1" value="🔧 Tool: extract_sow_data&#xa;&#xa;Parses contract document.&#xa;Extracts: roles, hourly rates,&#xa;FTE counts, seniority levels,&#xa;payment terms, key clauses.&#xa;&#xa;Returns confidence score&#xa;(0–1) per extracted field." style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F89738;strokeWidth=2;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="agent_layer">
+          <mxGeometry x="340" y="45" width="270" height="155" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tool2" value="🔧 Tool: lookup_benchmarks&#xa;&#xa;Queries internal synthetic&#xa;benchmark database.&#xa;Returns per-role:&#xa;• p25 / p50 / p75 / p90 bands&#xa;• Market position label&#xa;• Delta from benchmark %&#xa;• Target &amp; walk-away rates&#xa;• Monthly cost exposure ($)" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F89738;strokeWidth=2;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="agent_layer">
+          <mxGeometry x="655" y="45" width="270" height="155" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tool3" value="🔧 Tool: save_feedback&#xa;&#xa;Persists negotiation outcome.&#xa;Stores: rating, outcome type&#xa;(agreed/partial/no_deal),&#xa;what worked, what didn't,&#xa;CM comments.&#xa;&#xa;Fed into learning context&#xa;for future negotiations." style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F89738;strokeWidth=2;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="agent_layer">
+          <mxGeometry x="970" y="45" width="270" height="155" as="geometry" />
+        </mxCell>
+
+        <mxCell id="claude_api" value="☁️ Anthropic Claude API&#xa;&#xa;Model: claude-sonnet-4-5&#xa;Max tokens: 4096&#xa;Tool use: enabled&#xa;&#xa;Called via Anthropic Python SDK.&#xa;Loops until stop_reason ≠ tool_use.&#xa;Captures tool results for&#xa;explainability panel." style="rounded=10;whiteSpace=wrap;html=1;fillColor=#7C3AED;strokeColor=#7C3AED;fontColor=#FFFFFF;fontSize=10;verticalAlign=top;align=center;arcSize=8;" vertex="1" parent="agent_layer">
+          <mxGeometry x="1490" y="45" width="260" height="155" as="geometry" />
+        </mxCell>
+
+        <!-- ═══════════════════ DATA LAYER ═══════════════════ -->
+        <mxCell id="data_layer" value="Data Layer — In-Memory Session Store + Synthetic Benchmark &amp; Feedback Data (data_store.py)" style="swimlane;startSize=32;fillColor=#F0FDF4;strokeColor=#16A34A;strokeWidth=2;fontStyle=1;fontSize=12;fontColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="50" y="985" width="1800" height="185" as="geometry" />
+        </mxCell>
+
+        <mxCell id="data_sessions" value="📦 Session Store&#xa;(Python dict, in-memory)&#xa;&#xa;• session_id, filename, sow_text&#xa;• Agent message history (full)&#xa;• Chat transcript (role + content)&#xa;• Status (9 possible states)&#xa;• Approval decision + CM comments&#xa;• Analysis / tool output cache&#xa;• Re-negotiate reason" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="data_layer">
+          <mxGeometry x="25" y="45" width="295" height="125" as="geometry" />
+        </mxCell>
+
+        <mxCell id="data_bench" value="📊 Benchmark Data&#xa;(Synthetic, 15+ roles)&#xa;&#xa;Roles: Solution Architect, PM,&#xa;BA, DevOps, QA Lead, Data Eng,&#xa;Scrum Master, Security Eng, etc.&#xa;&#xa;Per role: p25/p50/p75/p90 ($/hr)&#xa;Payment terms benchmarks&#xa;(Net 30 preferred standard)" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="data_layer">
+          <mxGeometry x="360" y="45" width="295" height="125" as="geometry" />
+        </mxCell>
+
+        <mxCell id="data_feedback" value="🧠 Feedback &amp; Learning Store&#xa;(Synthetic seed + runtime data)&#xa;&#xa;Stores per session:&#xa;• Numeric rating (1–5)&#xa;• Outcome: agreed/partial/no_deal&#xa;• What worked in negotiation&#xa;• What didn't work&#xa;• Full CM comments and reasons&#xa;• Timestamp" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=1.5;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="data_layer">
+          <mxGeometry x="695" y="45" width="295" height="125" as="geometry" />
+        </mxCell>
+
+        <mxCell id="data_learning" value="🎓 Learning Context Engine&#xa;&#xa;Reads recent feedback history.&#xa;Builds dynamic prompt suffix&#xa;injected into every agent turn.&#xa;&#xa;Agent adapts strategy based on:&#xa;• Past approval outcomes&#xa;• Rejected negotiation patterns&#xa;• CM re-negotiate instructions&#xa;• Successful rate positions" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#FFF8F0;strokeColor=#F89738;strokeWidth=2;fontSize=10;fontColor=#09131b;verticalAlign=top;align=left;spacingLeft=6;arcSize=8;" vertex="1" parent="data_layer">
+          <mxGeometry x="1030" y="45" width="295" height="125" as="geometry" />
+        </mxCell>
+
+        <!-- ═══════════════════ STATUS FLOW ═══════════════════ -->
+        <mxCell id="status_layer" value="Contract Status Flow (9 States)" style="swimlane;startSize=32;fillColor=#F4F4F4;strokeColor=#DBDBDB;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1200" width="1800" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s_uploaded" value="uploaded" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#F4F4F4;strokeColor=#DBDBDB;fontSize=10;fontColor=#8B8B8B;fontStyle=1;" vertex="1" parent="status_layer">
+          <mxGeometry x="20" y="40" width="130" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="s_sent" value="sent_for_negotiation" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FFF8F0;strokeColor=#FDDCB0;fontSize=10;fontColor=#F89738;fontStyle=1;" vertex="1" parent="status_layer">
+          <mxGeometry x="175" y="40" width="185" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="s_inprog" value="negotiation_in_progress" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#FDE68A;fontSize=10;fontColor=#D97706;fontStyle=1;" vertex="1" parent="status_layer">
+          <mxGeometry x="385" y="40" width="205" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="s_pending" value="pending_approval" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#09131b;strokeColor=#09131b;fontSize=10;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="status_layer">
+          <mxGeometry x="615" y="40" width="155" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="s_approved" value="approved ✓" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#BBF7D0;fontSize=10;fontColor=#16A34A;fontStyle=1;" vertex="1" parent="status_layer">
+          <mxGeometry x="800" y="15" width="130" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="s_renegotiate" value="re_negotiate ↩" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#C7D2FE;fontSize=10;fontColor=#4F46E5;fontStyle=1;" vertex="1" parent="status_layer">
+          <mxGeometry x="800" y="40" width="150" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="s_offline" value="pending_offline_review 🔎" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#FDE68A;fontSize=10;fontColor=#D97706;fontStyle=1;" vertex="1" parent="status_layer">
+          <mxGeometry x="800" y="65" width="205" height="34" as="geometry" />
+        </mxCell>
+
+        <!-- Status arrows -->
+        <mxCell id="arr_u_s" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DBDBDB;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="s_uploaded" target="s_sent" parent="status_layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_s_i" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#F89738;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="s_sent" target="s_inprog" parent="status_layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_i_p" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D97706;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="s_inprog" target="s_pending" parent="status_layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p_a" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#16A34A;exitX=1;exitY=0.3;entryX=0;entryY=0.5;" edge="1" source="s_pending" target="s_approved" parent="status_layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p_r" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#4F46E5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="s_pending" target="s_renegotiate" parent="status_layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p_o" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D97706;exitX=1;exitY=0.7;entryX=0;entryY=0.5;" edge="1" source="s_pending" target="s_offline" parent="status_layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_r_back" value="CM triggers re-neg" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#4F46E5;dashed=1;fontSize=8;fontColor=#4F46E5;exitX=0.5;exitY=1;entryX=0.5;entryY=1;" edge="1" source="s_renegotiate" target="s_sent" parent="status_layer">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="875" y="100" />
+              <mxPoint x="267" y="100" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ═══════════════════ INTER-LAYER CONNECTORS ═══════════════════ -->
+
+        <!-- CM → Manager Portal -->
+        <mxCell id="conn_cm_mgr" value="Upload / Trigger / Approve" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#09131b;strokeWidth=2;fontSize=9;fontColor=#09131b;exitX=0.5;exitY=1;entryX=0.2;entryY=0;" edge="1" source="cm_box" target="fe_layer" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Vendor → Vendor Portal -->
+        <mxCell id="conn_vendor_vp" value="Negotiate via chat" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#F89738;strokeWidth=2;fontSize=9;fontColor=#F89738;exitX=0.5;exitY=1;entryX=0.8;entryY=0;" edge="1" source="vendor_box" target="fe_layer" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Frontend ↔ Backend REST -->
+        <mxCell id="conn_fe_be" value="REST API (HTTPS / JSON)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#4A90D9;strokeWidth=2.5;fontSize=10;fontColor=#4A90D9;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" source="fe_layer" target="be_layer" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Backend → Agent -->
+        <mxCell id="conn_be_agent" value="Invoke NegotiationAgent.run_turn()" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#F89738;strokeWidth=2.5;fontSize=10;fontColor=#F89738;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" source="be_layer" target="agent_layer" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Agent → Data (read/write) -->
+        <mxCell id="conn_agent_data" value="Read benchmarks · Write feedback · Read learning context" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#16A34A;strokeWidth=2.5;fontSize=10;fontColor=#16A34A;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" source="agent_layer" target="data_layer" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Agent → Claude API (external) -->
+        <mxCell id="conn_agent_claude" value="Anthropic SDK · tool_use loop" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#7C3AED;strokeWidth=2;fontSize=9;fontColor=#7C3AED;dashed=1;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="agent_layer" target="claude_api" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1890" y="840" />
+              <mxPoint x="1890" y="895" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ═══════════════════ INFRA LEGEND ═══════════════════ -->
+        <mxCell id="infra_bg" value="" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#F4F4F4;strokeColor=#DBDBDB;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1340" width="1800" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="infra_title" value="Infrastructure &amp; CI/CD:" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="75" y="1347" width="175" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="infra_vercel" value="▲ Vercel — Frontend hosting (auto-deploy from GitHub main)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="255" y="1347" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="infra_railway" value="🚂 Railway — Backend hosting (auto-deploy from GitHub main, $PORT injected)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="660" y="1347" width="460" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="infra_github" value="🐙 GitHub — Source: github.com/lunabora75/contract-negotiation-agent" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#09131b;" vertex="1" parent="1">
+          <mxGeometry x="1145" y="1347" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="infra_anthropic" value="🤖 Anthropic Claude Sonnet API (ANTHROPIC_API_KEY env var)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#7C3AED;" vertex="1" parent="1">
+          <mxGeometry x="1610" y="1347" width="215" height="40" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
