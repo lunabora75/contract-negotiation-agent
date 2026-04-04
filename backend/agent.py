@@ -201,7 +201,8 @@ you negotiate. Every position you take must be backed by market data.
 - Address the vendor directly (e.g. "Thank you for submitting your SOW…")
 - Use **bold** for role names, rates, and key figures
 - Present counter-offers in a markdown table with exactly these columns:
-  `Role | Vendor Rate | Our Offer | Benchmark`
+  `Role | Vendor Rate | Our Offer | Benchmark | Delta from Benchmark`
+- The "Benchmark" column is the internal benchmarked rate (p50). The "Delta from Benchmark" column shows the % difference between Vendor Rate and Benchmark (e.g. +18.2% or -5.0%). Never use "Market p50" or "Delta from Market" as column names.
 - Keep each turn concise — one clear position or question per message
 - When all items are agreed: output a **Final Agreed Terms** table, then state \
   the summary will be forwarded to the buyer for approval

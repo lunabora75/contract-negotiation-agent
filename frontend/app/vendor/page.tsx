@@ -33,13 +33,24 @@ function renderInline(text: string) {
   });
 }
 
+// Normalise column names so legacy "Market p50" / "Delta from Market" wording
+// is always shown as "Benchmark" / "Delta from Benchmark" regardless of what
+// the model returns.
+function normaliseHeader(h: string): string {
+  return h
+    .replace(/market\s*p50/gi, "Benchmark")
+    .replace(/delta\s+from\s+market/gi, "Delta from Benchmark")
+    .replace(/\bp50\b/gi, "Benchmark");
+}
+
 function MdTable({ lines }: { lines: string[] }) {
   const dataLines = lines.filter(l => !/^\|[\s:|-]+\|$/.test(l.trim()));
   const rows = dataLines.map(l =>
     l.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim())
   );
   if (rows.length === 0) return null;
-  const [headers, ...bodyRows] = rows;
+  const [rawHeaders, ...bodyRows] = rows;
+  const headers = rawHeaders.map(normaliseHeader);
   return (
     <div className="overflow-x-auto my-2 rounded-lg" style={{ border: `1px solid ${C.border}` }}>
       <table className="w-full text-xs border-collapse">

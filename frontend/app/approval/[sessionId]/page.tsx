@@ -185,8 +185,11 @@ export default function ApprovalPage() {
   const [submitted,  setSubmitted]  = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Collapsible sections
-  const [showTranscript, setShowTranscript] = useState(false);
+  // Collapsible sections — all open by default so CM sees everything
+  const [showIntelligence, setShowIntelligence] = useState(true);
+  const [showBenchmark,    setShowBenchmark]    = useState(true);
+  const [showFinalTerms,   setShowFinalTerms]   = useState(true);
+  const [showTranscript,   setShowTranscript]   = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -267,11 +270,11 @@ export default function ApprovalPage() {
   const totalSavings = bench?.total_monthly_cost_exposure ?? 0;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.light, fontFamily: FB }}>
+    <div style={{ minHeight: "100vh", background: C.light, fontFamily: FB, display: "flex", flexDirection: "column" }}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
-      <header style={{ background: C.dark }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <header style={{ background: C.dark, position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button onClick={() => router.push("/manager")}
               style={{ fontSize: 13, color: C.orange, background: "none", border: "none", cursor: "pointer", fontFamily: FB }}>
@@ -295,9 +298,10 @@ export default function ApprovalPage() {
         <div style={{ height: 2, background: `linear-gradient(90deg, ${C.orange} 0%, ${C.dark} 100%)` }} />
       </header>
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* ── Main content wrapper ─────────────────────────────────────────── */}
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "28px 24px", width: "100%", boxSizing: "border-box", flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
 
-        {/* ── Document info ────────────────────────────────────────────── */}
+        {/* ── Document info bar — full width ───────────────────────────── */}
         <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 24 }}>📄</span>
@@ -320,317 +324,366 @@ export default function ApprovalPage() {
           )}
         </div>
 
-        {/* ── CONTRACT INTELLIGENCE ────────────────────────────────────── */}
-        {ext && (
-          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
-            <SectionHeader
-              icon="🔍"
-              title="Contract Intelligence"
-              subtitle="Roles, rates and payment terms extracted from the SOW"
-              badge={
-                <span style={{ fontSize: 10, fontWeight: 600, background: C.light, color: C.gray, border: `1px solid ${C.border}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
-                  AI Extracted
-                </span>
-              }
-            />
+        {/* ── Two-column row ───────────────────────────────────────────── */}
+        <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
 
-            {/* Roles table */}
-            {ext.roles && ext.roles.length > 0 && (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr>
-                      <Th>Role Title</Th>
-                      <Th>Level</Th>
-                      <Th>FTE</Th>
-                      <Th>Proposed Rate ($/hr)</Th>
-                      <Th>Extraction Confidence</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ext.roles.map((role, i) => (
-                      <tr key={i} style={{ background: i % 2 === 0 ? C.white : "#FAFAFA" }}>
-                        <Td><strong style={{ fontFamily: FH }}>{role.title}</strong></Td>
-                        <Td>{role.level || "—"}</Td>
-                        <Td>{role.fte_count ?? "—"}</Td>
-                        <Td highlight>${role.hourly_rate}/hr</Td>
-                        <Td><ConfidenceBadge score={role.confidence} /></Td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+          {/* ── LEFT COLUMN: scrollable sections ──────────────────────── */}
+          <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
 
-            {/* Payment terms */}
-            <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>Payment Terms:</span>
-                <span style={{ fontFamily: FH, fontWeight: 700, fontSize: 13, color: C.dark }}>{ext.payment_terms?.schedule || "—"}</span>
-                {ext.payment_terms?.type && <span style={{ fontSize: 11, color: C.gray }}>({ext.payment_terms.type})</span>}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>Confidence:</span>
-                <ConfidenceBadge score={ext.payment_terms?.confidence ?? 0} />
-              </div>
-            </div>
+            {/* ── CONTRACT INTELLIGENCE (collapsible) ─────────────────── */}
+            {ext && (
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+                <button
+                  onClick={() => setShowIntelligence(v => !v)}
+                  style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                  <SectionHeader
+                    icon="🔍"
+                    title="Contract Intelligence"
+                    subtitle="Roles, rates and payment terms extracted from the SOW"
+                    badge={
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, background: C.light, color: C.gray, border: `1px solid ${C.border}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
+                          AI Extracted
+                        </span>
+                        <span style={{ fontSize: 13, color: C.gray }}>{showIntelligence ? "▲" : "▼"}</span>
+                      </div>
+                    }
+                  />
+                </button>
 
-            {/* Key clauses */}
-            {ext.key_clauses && Object.values(ext.key_clauses).some(v => v) && (
-              <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px 24px" }}>
-                {Object.entries(ext.key_clauses).filter(([, v]) => v).map(([k, v]) => (
-                  <div key={k}>
-                    <span style={{ fontSize: 9, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      {k.replace(/_/g, " ")}:{" "}
-                    </span>
-                    <span style={{ fontSize: 11, color: C.dark, fontFamily: FB }}>{v}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+                {showIntelligence && (
+                  <>
+                    {/* Roles table */}
+                    {ext.roles && ext.roles.length > 0 && (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 520 }}>
+                          <thead>
+                            <tr>
+                              <Th>Role Title</Th>
+                              <Th>Level</Th>
+                              <Th>FTE</Th>
+                              <Th>Proposed Rate ($/hr)</Th>
+                              <Th>Extraction Confidence</Th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ext.roles.map((role, i) => (
+                              <tr key={i} style={{ background: i % 2 === 0 ? C.white : "#FAFAFA" }}>
+                                <Td><strong style={{ fontFamily: FH }}>{role.title}</strong></Td>
+                                <Td>{role.level || "—"}</Td>
+                                <Td>{role.fte_count ?? "—"}</Td>
+                                <Td highlight>${role.hourly_rate}/hr</Td>
+                                <Td><ConfidenceBadge score={role.confidence} /></Td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
 
-            {/* Extraction notes */}
-            {ext.extraction_notes && (
-              <div style={{ padding: "10px 20px", borderTop: `1px solid ${C.border}`, background: C.light }}>
-                <p style={{ fontSize: 11, color: C.gray, margin: 0, fontFamily: FB }}>
-                  <strong>Note:</strong> {ext.extraction_notes}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+                    {/* Payment terms */}
+                    <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>Payment Terms:</span>
+                        <span style={{ fontFamily: FH, fontWeight: 700, fontSize: 13, color: C.dark }}>{ext.payment_terms?.schedule || "—"}</span>
+                        {ext.payment_terms?.type && <span style={{ fontSize: 11, color: C.gray }}>({ext.payment_terms.type})</span>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>Confidence:</span>
+                        <ConfidenceBadge score={ext.payment_terms?.confidence ?? 0} />
+                      </div>
+                    </div>
 
-        {/* ── BENCHMARK ANALYSIS ───────────────────────────────────────── */}
-        {bench && bench.role_comparisons.length > 0 && (
-          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
-            <SectionHeader
-              icon="📊"
-              title="Benchmark Analysis"
-              subtitle="How each proposed rate compares to internal benchmark data"
-              badge={
-                totalSavings > 0 ? (
-                  <span style={{ fontSize: 11, fontWeight: 700, background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
-                    ${totalSavings.toLocaleString()} /mo potential savings
-                  </span>
-                ) : undefined
-              }
-            />
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <Th>Role</Th>
-                    <Th>Vendor Rate</Th>
-                    <Th>Benchmark (P50)</Th>
-                    <Th>P75 Walk-away</Th>
-                    <Th>Position</Th>
-                    <Th>Delta vs Benchmark</Th>
-                    <Th>Monthly Exposure</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bench.role_comparisons.map((rc, i) => {
-                    const delta = rc.delta_from_median_pct ?? 0;
-                    const deltaColor = delta > 0 ? "#DC2626" : "#16A34A";
-                    return (
-                      <tr key={i} style={{ background: i % 2 === 0 ? C.white : "#FAFAFA" }}>
-                        <Td><strong style={{ fontFamily: FH }}>{rc.matched_benchmark || rc.title}</strong></Td>
-                        <Td highlight>${rc.proposed_rate}/hr</Td>
-                        <Td>{rc.p50 ? `$${rc.p50}/hr` : "—"}</Td>
-                        <Td>{rc.walk_away_rate ? `$${rc.walk_away_rate}/hr` : "—"}</Td>
-                        <Td><PositionBadge position={rc.market_position} /></Td>
-                        <Td>
-                          {delta !== 0 ? (
-                            <span style={{ fontSize: 12, fontWeight: 700, color: deltaColor, fontFamily: FB }}>
-                              {delta > 0 ? "+" : ""}{delta.toFixed(1)}%
+                    {/* Key clauses */}
+                    {ext.key_clauses && Object.values(ext.key_clauses).some(v => v) && (
+                      <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px 24px" }}>
+                        {Object.entries(ext.key_clauses).filter(([, v]) => v).map(([k, v]) => (
+                          <div key={k}>
+                            <span style={{ fontSize: 9, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                              {k.replace(/_/g, " ")}:{" "}
                             </span>
-                          ) : "At benchmark"}
-                        </Td>
-                        <Td>
-                          {(rc.monthly_cost_exposure ?? 0) > 0
-                            ? <span style={{ color: "#DC2626", fontWeight: 700, fontFamily: FB }}>${(rc.monthly_cost_exposure!).toLocaleString()}</span>
-                            : <span style={{ color: "#16A34A" }}>—</span>}
-                        </Td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                            <span style={{ fontSize: 11, color: C.dark, fontFamily: FB }}>{v}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-            {/* Payment terms benchmark */}
-            {bench.payment_terms_assessment && (
-              <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>Payment Terms:</span>
-                  <span style={{ fontFamily: FH, fontWeight: 700, fontSize: 13, color: C.dark }}>{bench.payment_terms_assessment.proposed}</span>
-                  <span style={{ fontSize: 11, color: C.gray }}>(preferred: {bench.payment_terms_assessment.preferred})</span>
-                </div>
-                <PaymentStatusBadge status={bench.payment_terms_assessment.status} />
-                {bench.payment_terms_assessment.note && (
-                  <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>{bench.payment_terms_assessment.note}</span>
+                    {/* Extraction notes */}
+                    {ext.extraction_notes && (
+                      <div style={{ padding: "10px 20px", borderTop: `1px solid ${C.border}`, background: C.light }}>
+                        <p style={{ fontSize: 11, color: C.gray, margin: 0, fontFamily: FB }}>
+                          <strong>Note:</strong> {ext.extraction_notes}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
 
-            {/* Benchmark legend */}
-            <div style={{ padding: "10px 20px", borderTop: `1px solid ${C.border}`, background: C.light, display: "flex", gap: 20, flexWrap: "wrap" }}>
-              {[
-                { label: "P50 — Benchmark median (agent's opening target)", color: "#16A34A" },
-                { label: "P75 — Experienced range (agent's walk-away limit)", color: C.orange },
-              ].map(l => (
-                <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: l.color }} />
-                  <span style={{ fontSize: 10, color: C.gray, fontFamily: FB }}>{l.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+            {/* ── BENCHMARK ANALYSIS (collapsible) ────────────────────── */}
+            {bench && bench.role_comparisons.length > 0 && (
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+                <button
+                  onClick={() => setShowBenchmark(v => !v)}
+                  style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                  <SectionHeader
+                    icon="📊"
+                    title="Benchmark Analysis"
+                    subtitle="How each proposed rate compares to internal benchmark data"
+                    badge={
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {totalSavings > 0 ? (
+                          <span style={{ fontSize: 11, fontWeight: 700, background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
+                            ${totalSavings.toLocaleString()} /mo potential savings
+                          </span>
+                        ) : null}
+                        <span style={{ fontSize: 13, color: C.gray }}>{showBenchmark ? "▲" : "▼"}</span>
+                      </div>
+                    }
+                  />
+                </button>
 
-        {/* ── FINAL OFFER ──────────────────────────────────────────────── */}
-        {finalTermsMsg && (
-          <div style={{ background: C.white, border: `2px solid ${C.orangeBorder}`, borderRadius: 14, overflow: "hidden" }}>
-            <SectionHeader
-              icon="✅"
-              title="Final Negotiated Terms"
-              subtitle="Agreed terms extracted from the end of the negotiation"
-              badge={
-                <span style={{ fontSize: 10, fontWeight: 700, background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
-                  Ready for Approval
-                </span>
-              }
-            />
-            <div style={{ padding: "16px 20px" }}>
-              <PlainText text={finalTermsMsg} />
-            </div>
-          </div>
-        )}
+                {showBenchmark && (
+                  <>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
+                        <thead>
+                          <tr>
+                            <Th>Role</Th>
+                            <Th>Vendor Rate</Th>
+                            <Th>Benchmark (P50)</Th>
+                            <Th>P75 Walk-away</Th>
+                            <Th>Position</Th>
+                            <Th>Delta vs Benchmark</Th>
+                            <Th>Monthly Exposure</Th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bench.role_comparisons.map((rc, i) => {
+                            const delta = rc.delta_from_median_pct ?? 0;
+                            const deltaColor = delta > 0 ? "#DC2626" : "#16A34A";
+                            return (
+                              <tr key={i} style={{ background: i % 2 === 0 ? C.white : "#FAFAFA" }}>
+                                <Td><strong style={{ fontFamily: FH }}>{rc.matched_benchmark || rc.title}</strong></Td>
+                                <Td highlight>${rc.proposed_rate}/hr</Td>
+                                <Td>{rc.p50 ? `$${rc.p50}/hr` : "—"}</Td>
+                                <Td>{rc.walk_away_rate ? `$${rc.walk_away_rate}/hr` : "—"}</Td>
+                                <Td><PositionBadge position={rc.market_position} /></Td>
+                                <Td>
+                                  {delta !== 0 ? (
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: deltaColor, fontFamily: FB }}>
+                                      {delta > 0 ? "+" : ""}{delta.toFixed(1)}%
+                                    </span>
+                                  ) : "At benchmark"}
+                                </Td>
+                                <Td>
+                                  {(rc.monthly_cost_exposure ?? 0) > 0
+                                    ? <span style={{ color: "#DC2626", fontWeight: 700, fontFamily: FB }}>${(rc.monthly_cost_exposure!).toLocaleString()}</span>
+                                    : <span style={{ color: "#16A34A" }}>—</span>}
+                                </Td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
 
-        {/* ── NEGOTIATION TRANSCRIPT (collapsible) ─────────────────────── */}
-        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
-          <button
-            onClick={() => setShowTranscript(v => !v)}
-            style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-            <SectionHeader
-              icon="💬"
-              title="Full Negotiation Transcript"
-              subtitle={`${summary?.chat.length ?? 0} messages — click to ${showTranscript ? "collapse" : "expand"}`}
-              badge={
-                <span style={{ fontSize: 13, color: C.gray }}>{showTranscript ? "▲" : "▼"}</span>
-              }
-            />
-          </button>
-          {showTranscript && (
-            <div style={{ maxHeight: 480, overflowY: "auto" }}>
-              {summary?.chat.map((msg, i) => (
-                <div key={i} style={{ padding: "14px 20px", background: msg.role === "agent" ? C.white : "#FAFAFA", borderBottom: `1px solid ${C.border}` }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <span style={{ width: 24, height: 24, borderRadius: "50%", background: msg.role === "agent" ? C.orange : C.dark, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: C.white, flexShrink: 0 }}>
-                      {msg.role === "agent" ? "AI" : "V"}
-                    </span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: C.gray, fontFamily: FB }}>
-                      {msg.role === "agent" ? "Negotiation Agent" : "Vendor"}
-                    </span>
-                  </div>
-                  <div style={{ paddingLeft: 32 }}>
-                    <PlainText text={msg.content} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                    {/* Payment terms benchmark */}
+                    {bench.payment_terms_assessment && (
+                      <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>Payment Terms:</span>
+                          <span style={{ fontFamily: FH, fontWeight: 700, fontSize: 13, color: C.dark }}>{bench.payment_terms_assessment.proposed}</span>
+                          <span style={{ fontSize: 11, color: C.gray }}>(preferred: {bench.payment_terms_assessment.preferred})</span>
+                        </div>
+                        <PaymentStatusBadge status={bench.payment_terms_assessment.status} />
+                        {bench.payment_terms_assessment.note && (
+                          <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>{bench.payment_terms_assessment.note}</span>
+                        )}
+                      </div>
+                    )}
 
-        {/* ── APPROVAL FORM ────────────────────────────────────────────── */}
-        {!existingApproval ? (
-          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "24px", display: "flex", flexDirection: "column", gap: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <div>
-              <h2 style={{ fontFamily: FH, fontWeight: 700, fontSize: 16, color: C.dark, margin: "0 0 4px" }}>Category Manager Decision</h2>
-              <p style={{ fontSize: 12, color: C.gray, margin: 0, fontFamily: FB }}>Review the contract intelligence, benchmark analysis and final terms above, then approve or reject</p>
-            </div>
-
-            {/* Name */}
-            <div>
-              <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>Your Name (optional)</label>
-              <input type="text" value={approver} onChange={e => setApprover(e.target.value)}
-                placeholder="e.g. Jane Smith"
-                style={{ width: "100%", background: C.light, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: C.dark, fontFamily: FB, outline: "none", boxSizing: "border-box" }} />
-            </div>
-
-            {/* Decision */}
-            <div>
-              <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>Decision</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                {(["approved", "rejected"] as const).map(d => (
-                  <button key={d} onClick={() => setDecision(d)}
-                    style={{
-                      padding: "16px 0", borderRadius: 12, fontFamily: FB, fontWeight: 700, fontSize: 14, cursor: "pointer",
-                      background: decision === d ? (d === "approved" ? C.orangeBg : C.light) : C.white,
-                      color:      decision === d ? (d === "approved" ? C.orange : C.dark) : C.gray,
-                      border:     `2px solid ${decision === d ? (d === "approved" ? C.orange : C.dark) : C.border}`,
-                    }}>
-                    {d === "approved" ? "✓ Approve Terms" : "✕ Reject Terms"}
-                  </button>
-                ))}
+                    {/* Benchmark legend */}
+                    <div style={{ padding: "10px 20px", borderTop: `1px solid ${C.border}`, background: C.light, display: "flex", gap: 20, flexWrap: "wrap" }}>
+                      {[
+                        { label: "P50 — Benchmark median (agent's opening target)", color: "#16A34A" },
+                        { label: "P75 — Experienced range (agent's walk-away limit)", color: C.orange },
+                      ].map(l => (
+                        <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: l.color }} />
+                          <span style={{ fontSize: 10, color: C.gray, fontFamily: FB }}>{l.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-
-            {/* Comments */}
-            <div>
-              <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>
-                Comments {decision === "rejected" ? "(required)" : "(optional — helps the AI agent learn)"}
-              </label>
-              <textarea value={comments} onChange={e => setComments(e.target.value)} rows={4}
-                placeholder={decision === "rejected" ? "Explain why you are rejecting these terms and what changes are needed…" : "Any conditions, feedback or notes for the agent to learn from…"}
-                style={{ width: "100%", background: C.light, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: C.dark, fontFamily: FB, resize: "none", outline: "none", boxSizing: "border-box" }} />
-            </div>
-
-            {/* Submit */}
-            <button onClick={handleSubmit}
-              disabled={!decision || (decision === "rejected" && !comments.trim()) || submitting}
-              style={{
-                width: "100%", padding: "14px 0", borderRadius: 12, border: "none",
-                fontFamily: FB, fontWeight: 700, fontSize: 14, cursor: decision ? "pointer" : "not-allowed",
-                background: decision && !(decision === "rejected" && !comments.trim()) ? C.orange : C.border,
-                color:      decision && !(decision === "rejected" && !comments.trim()) ? C.white : C.gray,
-              }}>
-              {submitting ? "Submitting…" : decision === "approved" ? "Confirm Approval" : decision === "rejected" ? "Submit Rejection" : "Select a Decision Above"}
-            </button>
-
-            <p style={{ fontSize: 11, color: C.border, textAlign: "center", margin: 0, fontFamily: FB }}>
-              Your decision and comments are saved and used to improve future AI negotiations
-            </p>
-          </div>
-        ) : (
-          /* Already decided */
-          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 24px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: existingApproval.decision === "approved" ? C.orangeBg : C.light, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
-                {existingApproval.decision === "approved" ? "✓" : "✕"}
-              </div>
-              <div>
-                <p style={{ fontFamily: FH, fontWeight: 700, fontSize: 14, color: C.dark, margin: 0 }}>
-                  Terms {existingApproval.decision === "approved" ? "Approved" : "Rejected"}
-                </p>
-                <p style={{ fontSize: 11, color: C.gray, margin: "2px 0 0", fontFamily: FB }}>
-                  {existingApproval.approver && `By ${existingApproval.approver} · `}
-                  {new Date(existingApproval.timestamp).toLocaleString()}
-                </p>
-              </div>
-            </div>
-            {existingApproval.comments && (
-              <p style={{ fontSize: 13, background: C.light, borderRadius: 8, padding: "10px 14px", color: C.dark, margin: 0, fontFamily: FB }}>
-                "{existingApproval.comments}"
-              </p>
             )}
-          </div>
-        )}
+
+            {/* ── FINAL NEGOTIATED TERMS (collapsible) ────────────────── */}
+            {finalTermsMsg && (
+              <div style={{ background: C.white, border: `2px solid ${C.orangeBorder}`, borderRadius: 14, overflow: "hidden" }}>
+                <button
+                  onClick={() => setShowFinalTerms(v => !v)}
+                  style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                  <SectionHeader
+                    icon="✅"
+                    title="Final Negotiated Terms"
+                    subtitle="Agreed terms extracted from the end of the negotiation"
+                    badge={
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
+                          Ready for Approval
+                        </span>
+                        <span style={{ fontSize: 13, color: C.gray }}>{showFinalTerms ? "▲" : "▼"}</span>
+                      </div>
+                    }
+                  />
+                </button>
+                {showFinalTerms && (
+                  <div style={{ padding: "16px 20px" }}>
+                    <PlainText text={finalTermsMsg} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── NEGOTIATION TRANSCRIPT (collapsible) ────────────────── */}
+            <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+              <button
+                onClick={() => setShowTranscript(v => !v)}
+                style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                <SectionHeader
+                  icon="💬"
+                  title="Full Negotiation Transcript"
+                  subtitle={`${summary?.chat.length ?? 0} messages — click to ${showTranscript ? "collapse" : "expand"}`}
+                  badge={
+                    <span style={{ fontSize: 13, color: C.gray }}>{showTranscript ? "▲" : "▼"}</span>
+                  }
+                />
+              </button>
+              {showTranscript && (
+                <div style={{ maxHeight: 480, overflowY: "auto" }}>
+                  {summary?.chat.map((msg, i) => (
+                    <div key={i} style={{ padding: "14px 20px", background: msg.role === "agent" ? C.white : "#FAFAFA", borderBottom: `1px solid ${C.border}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <span style={{ width: 24, height: 24, borderRadius: "50%", background: msg.role === "agent" ? C.orange : C.dark, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: C.white, flexShrink: 0 }}>
+                          {msg.role === "agent" ? "AI" : "V"}
+                        </span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: C.gray, fontFamily: FB }}>
+                          {msg.role === "agent" ? "Negotiation Agent" : "Vendor"}
+                        </span>
+                      </div>
+                      <div style={{ paddingLeft: 32 }}>
+                        <PlainText text={msg.content} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>{/* end left column */}
+
+          {/* ── RIGHT COLUMN: sticky approval form ────────────────────── */}
+          <div style={{ width: 340, flexShrink: 0, position: "sticky", top: 72, alignSelf: "flex-start" }}>
+
+            {/* ── APPROVAL FORM ──────────────────────────────────────── */}
+            {!existingApproval ? (
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "22px", display: "flex", flexDirection: "column", gap: 18, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                {/* Visual header */}
+                <div style={{ borderBottom: `2px solid ${C.orange}`, paddingBottom: 14 }}>
+                  <h2 style={{ fontFamily: FH, fontWeight: 700, fontSize: 15, color: C.dark, margin: "0 0 4px" }}>Category Manager Decision</h2>
+                  <p style={{ fontSize: 11, color: C.gray, margin: 0, fontFamily: FB }}>Review the analysis on the left, then approve or reject</p>
+                </div>
+
+                {/* Name */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>Your Name (optional)</label>
+                  <input type="text" value={approver} onChange={e => setApprover(e.target.value)}
+                    placeholder="e.g. Jane Smith"
+                    style={{ width: "100%", background: C.light, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 13px", fontSize: 12, color: C.dark, fontFamily: FB, outline: "none", boxSizing: "border-box" }} />
+                </div>
+
+                {/* Decision */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>Decision</label>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    {(["approved", "rejected"] as const).map(d => (
+                      <button key={d} onClick={() => setDecision(d)}
+                        style={{
+                          padding: "14px 0", borderRadius: 12, fontFamily: FB, fontWeight: 700, fontSize: 13, cursor: "pointer",
+                          background: decision === d ? (d === "approved" ? C.orangeBg : C.light) : C.white,
+                          color:      decision === d ? (d === "approved" ? C.orange : C.dark) : C.gray,
+                          border:     `2px solid ${decision === d ? (d === "approved" ? C.orange : C.dark) : C.border}`,
+                        }}>
+                        {d === "approved" ? "✓ Approve Terms" : "✕ Reject Terms"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Comments */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>
+                    Comments {decision === "rejected" ? "(required)" : "(optional — helps the AI agent learn)"}
+                  </label>
+                  <textarea value={comments} onChange={e => setComments(e.target.value)} rows={4}
+                    placeholder={decision === "rejected" ? "Explain why you are rejecting these terms and what changes are needed…" : "Any conditions, feedback or notes for the agent to learn from…"}
+                    style={{ width: "100%", background: C.light, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 13px", fontSize: 12, color: C.dark, fontFamily: FB, resize: "none", outline: "none", boxSizing: "border-box" }} />
+                </div>
+
+                {/* Submit */}
+                <button onClick={handleSubmit}
+                  disabled={!decision || (decision === "rejected" && !comments.trim()) || submitting}
+                  style={{
+                    width: "100%", padding: "13px 0", borderRadius: 12, border: "none",
+                    fontFamily: FB, fontWeight: 700, fontSize: 13, cursor: decision ? "pointer" : "not-allowed",
+                    background: decision && !(decision === "rejected" && !comments.trim()) ? C.orange : C.border,
+                    color:      decision && !(decision === "rejected" && !comments.trim()) ? C.white : C.gray,
+                  }}>
+                  {submitting ? "Submitting…" : decision === "approved" ? "Confirm Approval" : decision === "rejected" ? "Submit Rejection" : "Select a Decision Above"}
+                </button>
+
+                <p style={{ fontSize: 11, color: C.border, textAlign: "center", margin: 0, fontFamily: FB }}>
+                  Your decision and comments are saved and used to improve future AI negotiations
+                </p>
+              </div>
+            ) : (
+              /* Already decided */
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "22px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: existingApproval.decision === "approved" ? C.orangeBg : C.light, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
+                    {existingApproval.decision === "approved" ? "✓" : "✕"}
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: FH, fontWeight: 700, fontSize: 14, color: C.dark, margin: 0 }}>
+                      Terms {existingApproval.decision === "approved" ? "Approved" : "Rejected"}
+                    </p>
+                    <p style={{ fontSize: 11, color: C.gray, margin: "2px 0 0", fontFamily: FB }}>
+                      {existingApproval.approver && `By ${existingApproval.approver} · `}
+                      {new Date(existingApproval.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                {existingApproval.comments && (
+                  <p style={{ fontSize: 12, background: C.light, borderRadius: 8, padding: "10px 14px", color: C.dark, margin: 0, fontFamily: FB }}>
+                    "{existingApproval.comments}"
+                  </p>
+                )}
+              </div>
+            )}
+
+          </div>{/* end right column */}
+
+        </div>{/* end two-column row */}
 
         {/* Footer */}
         <p style={{ textAlign: "center", fontSize: 11, color: C.border, fontFamily: FB, paddingBottom: 8 }}>
           AI Powered Contract Negotiation · MResult
         </p>
+
       </div>
     </div>
   );
