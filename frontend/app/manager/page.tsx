@@ -26,12 +26,14 @@ interface Session {
 
 // ── Status display map ─────────────────────────────────────────────────────
 const STATUS_META: Record<string, { label: string; color: string; bg: string; border: string; dot?: boolean }> = {
-  uploaded:               { label: "Uploaded",                color: C.gray,    bg: C.light,     border: C.border },
-  sent_for_negotiation:   { label: "Sent for Negotiation",    color: C.orange,  bg: C.orangeBg,  border: C.orangeBorder },
-  negotiation_in_progress:{ label: "Negotiation in Progress", color: "#D97706", bg: "#FFFBEB",   border: "#FDE68A", dot: true },
-  pending_approval:       { label: "Pending Approval",        color: C.white,   bg: C.dark,      border: C.dark },
-  approved:               { label: "Approved",                color: "#16A34A", bg: "#F0FDF4",   border: "#BBF7D0" },
-  rejected:               { label: "Rejected",                color: "#DC2626", bg: "#FFF4F4",   border: "#FECACA" },
+  uploaded:               { label: "Uploaded",                    color: C.gray,    bg: C.light,     border: C.border },
+  sent_for_negotiation:   { label: "Sent for Negotiation",        color: C.orange,  bg: C.orangeBg,  border: C.orangeBorder },
+  negotiation_in_progress:{ label: "Negotiation in Progress",     color: "#D97706", bg: "#FFFBEB",   border: "#FDE68A", dot: true },
+  pending_approval:       { label: "Pending Approval",            color: C.white,   bg: C.dark,      border: C.dark },
+  re_negotiate:           { label: "Re-negotiate",                color: "#4F46E5", bg: "#EEF2FF",   border: "#C7D2FE" },
+  pending_offline_review: { label: "Pending Offline Review",      color: "#D97706", bg: "#FFFBEB",   border: "#FDE68A" },
+  approved:               { label: "Approved",                    color: "#16A34A", bg: "#F0FDF4",   border: "#BBF7D0" },
+  rejected:               { label: "Rejected",                    color: "#DC2626", bg: "#FFF4F4",   border: "#FECACA" },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -140,7 +142,9 @@ export default function ManagerPage() {
   // ── Filtered sessions ────────────────────────────────────────────────────
   const filtered = filter === "all" ? sessions : sessions.filter(s => s.status === filter);
 
-  const pendingApprovals = sessions.filter(s => s.status === "pending_approval");
+  const pendingApprovals = sessions.filter(s =>
+    ["pending_approval", "re_negotiate", "pending_offline_review"].includes(s.status)
+  );
 
   const statusCounts = sessions.reduce<Record<string, number>>((acc, s) => {
     acc[s.status] = (acc[s.status] || 0) + 1;
@@ -245,24 +249,45 @@ export default function ManagerPage() {
             <div className="space-y-3">
               {pendingApprovals.map(s => (
                 <div key={s.session_id} className="rounded-xl p-5 flex items-center justify-between gap-4"
-                  style={{ background: C.white, border: `2px solid ${C.dark}`, boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+                  style={{
+                    background: C.white,
+                    border: `2px solid ${s.status === "re_negotiate" ? "#6366F1" : C.dark}`,
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.08)"
+                  }}>
                   <div className="flex items-center gap-4 min-w-0">
-                    <span className="text-2xl shrink-0">📋</span>
+                    <span className="text-2xl shrink-0">
+                      {s.status === "re_negotiate" ? "↩" : s.status === "pending_offline_review" ? "🔎" : "📋"}
+                    </span>
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate" style={{ color: C.dark }}>{s.filename}</p>
                       <p className="text-xs mt-0.5" style={{ color: C.gray }}>
-                        Negotiation completed · {fmtDate(s.created_at)}
+                        {s.status === "re_negotiate"
+                          ? "Returned for re-negotiation · "
+                          : s.status === "pending_offline_review"
+                          ? "Pending offline review · "
+                          : "Negotiation completed · "}
+                        {fmtDate(s.created_at)}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <StatusBadge status={s.status} />
-                    <button
-                      onClick={() => router.push(`/approval/${s.session_id}`)}
-                      className="px-4 py-2 rounded-lg font-semibold text-sm transition-all"
-                      style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY }}>
-                      Review & Approve →
-                    </button>
+                    {s.status === "re_negotiate" ? (
+                      <button
+                        onClick={() => trigger(s.session_id)}
+                        disabled={triggeringId === s.session_id}
+                        className="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap"
+                        style={{ background: C.dark, color: C.white, fontFamily: FONT_BODY, opacity: triggeringId === s.session_id ? 0.6 : 1 }}>
+                        {triggeringId === s.session_id ? "Sending…" : "Send to AI Agent for Re-negotiation →"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => router.push(`/approval/${s.session_id}`)}
+                        className="px-4 py-2 rounded-lg font-semibold text-sm transition-all"
+                        style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY }}>
+                        Review & Approve →
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -278,13 +303,15 @@ export default function ManagerPage() {
             {/* Filter pills */}
             <div className="flex flex-wrap gap-2">
               {[
-                ["all",                   `All (${sessions.length})`],
-                ["uploaded",              `Uploaded (${statusCounts.uploaded || 0})`],
-                ["sent_for_negotiation",  `Sent (${statusCounts.sent_for_negotiation || 0})`],
+                ["all",                    `All (${sessions.length})`],
+                ["uploaded",               `Uploaded (${statusCounts.uploaded || 0})`],
+                ["sent_for_negotiation",   `Sent (${statusCounts.sent_for_negotiation || 0})`],
                 ["negotiation_in_progress",`In Progress (${statusCounts.negotiation_in_progress || 0})`],
-                ["pending_approval",      `Pending (${statusCounts.pending_approval || 0})`],
-                ["approved",              `Approved (${statusCounts.approved || 0})`],
-                ["rejected",              `Rejected (${statusCounts.rejected || 0})`],
+                ["pending_approval",       `Pending Approval (${statusCounts.pending_approval || 0})`],
+                ["re_negotiate",           `Re-negotiate (${statusCounts.re_negotiate || 0})`],
+                ["pending_offline_review", `Offline Review (${statusCounts.pending_offline_review || 0})`],
+                ["approved",               `Approved (${statusCounts.approved || 0})`],
+                ["rejected",               `Rejected (${statusCounts.rejected || 0})`],
               ].map(([val, label]) => (
                 <button key={val} onClick={() => setFilter(val)}
                   className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
@@ -356,7 +383,16 @@ export default function ManagerPage() {
                               disabled={triggeringId === s.session_id}
                               className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
                               style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY, opacity: triggeringId === s.session_id ? 0.6 : 1 }}>
-                              {triggeringId === s.session_id ? "Sending…" : "Send to AI Agent to Negotiate →"}
+                              {triggeringId === s.session_id ? "Sending…" : "Send to AI Agent for Negotiation →"}
+                            </button>
+                          )}
+                          {s.status === "re_negotiate" && (
+                            <button
+                              onClick={() => trigger(s.session_id)}
+                              disabled={triggeringId === s.session_id}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
+                              style={{ background: C.dark, color: C.white, fontFamily: FONT_BODY, opacity: triggeringId === s.session_id ? 0.6 : 1 }}>
+                              {triggeringId === s.session_id ? "Sending…" : "Send to AI Agent for Re-negotiation →"}
                             </button>
                           )}
                           {s.status === "sent_for_negotiation" && (
@@ -365,7 +401,7 @@ export default function ManagerPage() {
                           {s.status === "negotiation_in_progress" && (
                             <span className="text-xs" style={{ color: "#D97706" }}>Negotiation active</span>
                           )}
-                          {s.status === "pending_approval" && (
+                          {(s.status === "pending_approval" || s.status === "pending_offline_review") && (
                             <button
                               onClick={() => router.push(`/approval/${s.session_id}`)}
                               className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"

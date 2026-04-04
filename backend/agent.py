@@ -234,17 +234,30 @@ class NegotiationAgent:
         self,
         messages: list[dict],
         sow_text: str | None = None,
+        renegotiate_reason: str | None = None,
     ) -> tuple[str, list[dict]]:
         self.captured_tools = {}
         msgs = list(messages)
 
         if sow_text and not msgs:
+            renegotiate_ctx = ""
+            if renegotiate_reason:
+                renegotiate_ctx = (
+                    f"\n\nIMPORTANT — RE-NEGOTIATION: This contract was previously negotiated "
+                    f"and the agreed terms were REJECTED by the Category Manager. "
+                    f"Reason: \"{renegotiate_reason}\". "
+                    f"When opening this session you MUST: "
+                    f"(1) clearly inform the vendor their previous agreement was rejected; "
+                    f"(2) state the specific reason(s) from the Category Manager; "
+                    f"(3) re-negotiate addressing those concerns directly.\n\n"
+                )
             msgs.append({
                 "role": "user",
                 "content": (
                     "Please review the following Statement of Work and open the negotiation "
                     "directly with the vendor. Extract the data, benchmark the rates, then "
                     "present your counter-offer clearly and professionally.\n\n"
+                    + renegotiate_ctx +
                     f"---BEGIN SOW---\n{sow_text}\n---END SOW---"
                 ),
             })

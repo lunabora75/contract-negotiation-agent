@@ -172,7 +172,7 @@ export default function VendorPage() {
   const [availableSessions, setAvailableSessions] = useState<ActiveSession[]>([]);
   const [loadingList,        setLoadingList]        = useState(true);
   const [activeSession,      setActiveSession]      = useState<ActiveSession | null>(null);
-  const [connecting,         setConnecting]         = useState(false);
+  const [connectingId,       setConnectingId]       = useState<string | null>(null);
 
   // Chat
   const [messages,         setMessages]         = useState<ChatMessage[]>([]);
@@ -211,7 +211,7 @@ export default function VendorPage() {
 
   // ── Connect to a session (initiate) ────────────────────────────────────
   const connectToSession = async (session: ActiveSession) => {
-    setConnecting(true);
+    setConnectingId(session.session_id);
     try {
       const res  = await fetch(`${API}/api/sessions/${session.session_id}/initiate`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to initiate negotiation");
@@ -222,7 +222,7 @@ export default function VendorPage() {
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to connect.");
     } finally {
-      setConnecting(false);
+      setConnectingId(null);
     }
   };
 
@@ -335,10 +335,10 @@ export default function VendorPage() {
                       </div>
                       <button
                         onClick={() => connectToSession(s)}
-                        disabled={connecting}
+                        disabled={connectingId !== null}
                         className="px-4 py-2 rounded-lg font-semibold text-sm shrink-0"
-                        style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY, opacity: connecting ? 0.6 : 1 }}>
-                        {connecting ? "Connecting…" : s.status === "negotiation_in_progress" ? "Resume →" : "Start →"}
+                        style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY, opacity: connectingId === s.session_id ? 0.6 : 1 }}>
+                        {connectingId === s.session_id ? "Connecting…" : s.status === "negotiation_in_progress" ? "Resume →" : "Start →"}
                       </button>
                     </div>
                   ))}

@@ -179,16 +179,16 @@ export default function ApprovalPage() {
   const [analysis,   setAnalysis]   = useState<AnalysisData | null>(null);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState("");
-  const [decision,   setDecision]   = useState<"approved" | "rejected" | "">("");
+  const [decision,   setDecision]   = useState<"approved" | "renegotiate" | "offline_review" | "">("");
   const [comments,   setComments]   = useState("");
   const [approver,   setApprover]   = useState("");
   const [submitted,  setSubmitted]  = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Collapsible sections — all open by default so CM sees everything
-  const [showIntelligence, setShowIntelligence] = useState(true);
-  const [showBenchmark,    setShowBenchmark]    = useState(true);
-  const [showFinalTerms,   setShowFinalTerms]   = useState(true);
+  // Collapsible sections — all collapsed by default; CM decision is always visible in the sticky right panel
+  const [showIntelligence, setShowIntelligence] = useState(false);
+  const [showBenchmark,    setShowBenchmark]    = useState(false);
+  const [showFinalTerms,   setShowFinalTerms]   = useState(false);
   const [showTranscript,   setShowTranscript]   = useState(false);
 
   useEffect(() => {
@@ -243,17 +243,23 @@ export default function ApprovalPage() {
     </div>
   );
 
+  const decisionMeta = {
+    approved:       { icon: "✓", title: "Terms Approved",           msg: "Negotiated terms approved and saved.",                                           iconBg: C.orangeBg,  iconBorder: C.orange },
+    renegotiate:    { icon: "↩", title: "Sent for Re-negotiation",  msg: "The contract has been returned to the AI Agent for re-negotiation with the vendor.", iconBg: "#EEF2FF",   iconBorder: "#6366F1" },
+    offline_review: { icon: "🔎", title: "Sent for Offline Review",  msg: "The contract is pending offline review. It will remain in your approvals queue.",   iconBg: C.light,     iconBorder: C.border  },
+  };
+
   if (submitted) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.light }}>
       <div style={{ textAlign: "center", padding: 40, borderRadius: 20, background: C.white, border: `1px solid ${C.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.08)", maxWidth: 400 }}>
-        <div style={{ width: 64, height: 64, borderRadius: "50%", background: decision === "approved" ? C.orangeBg : C.light, border: `2px solid ${decision === "approved" ? C.orange : C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 20px" }}>
-          {decision === "approved" ? "✓" : "✕"}
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: decisionMeta[decision as keyof typeof decisionMeta]?.iconBg ?? C.light, border: `2px solid ${decisionMeta[decision as keyof typeof decisionMeta]?.iconBorder ?? C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 20px" }}>
+          {decisionMeta[decision as keyof typeof decisionMeta]?.icon ?? "✓"}
         </div>
         <h2 style={{ fontFamily: FH, fontWeight: 700, fontSize: 20, color: C.dark, margin: "0 0 8px" }}>
-          {decision === "approved" ? "Terms Approved" : "Terms Rejected"}
+          {decisionMeta[decision as keyof typeof decisionMeta]?.title ?? "Decision Recorded"}
         </h2>
         <p style={{ fontSize: 13, color: C.gray, fontFamily: FB, margin: "0 0 8px" }}>
-          {decision === "approved" ? "Negotiated terms approved and saved." : "The agent will learn from your feedback for future negotiations."}
+          {decisionMeta[decision as keyof typeof decisionMeta]?.msg}
         </p>
         {comments && <p style={{ fontSize: 12, background: C.light, borderRadius: 8, padding: "8px 12px", color: C.gray, fontFamily: FB, margin: "8px 0 0" }}>"{comments}"</p>}
         <p style={{ fontSize: 11, color: C.border, fontFamily: FB, marginTop: 16 }}>Returning to Category Manager portal…</p>
@@ -606,44 +612,61 @@ export default function ApprovalPage() {
                     style={{ width: "100%", background: C.light, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 13px", fontSize: 12, color: C.dark, fontFamily: FB, outline: "none", boxSizing: "border-box" }} />
                 </div>
 
-                {/* Decision */}
+                {/* Decision — 3 options */}
                 <div>
                   <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>Decision</label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    {(["approved", "rejected"] as const).map(d => (
-                      <button key={d} onClick={() => setDecision(d)}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {([
+                      { key: "approved",       label: "✓ Approve Terms",          bg: C.orangeBg, color: C.orange,  border: C.orange,  activeBg: C.orangeBg },
+                      { key: "renegotiate",    label: "↩ Re-negotiate Terms",     bg: "#EEF2FF",  color: "#4F46E5", border: "#6366F1", activeBg: "#EEF2FF" },
+                      { key: "offline_review", label: "🔎 Offline Review",         bg: C.light,    color: C.dark,    border: C.dark,    activeBg: C.light   },
+                    ] as const).map(opt => (
+                      <button key={opt.key} onClick={() => setDecision(opt.key)}
                         style={{
-                          padding: "14px 0", borderRadius: 12, fontFamily: FB, fontWeight: 700, fontSize: 13, cursor: "pointer",
-                          background: decision === d ? (d === "approved" ? C.orangeBg : C.light) : C.white,
-                          color:      decision === d ? (d === "approved" ? C.orange : C.dark) : C.gray,
-                          border:     `2px solid ${decision === d ? (d === "approved" ? C.orange : C.dark) : C.border}`,
+                          padding: "12px 16px", borderRadius: 10, fontFamily: FB, fontWeight: 700, fontSize: 13,
+                          cursor: "pointer", textAlign: "left",
+                          background: decision === opt.key ? opt.activeBg : C.white,
+                          color:      decision === opt.key ? opt.color : C.gray,
+                          border:     `2px solid ${decision === opt.key ? opt.border : C.border}`,
                         }}>
-                        {d === "approved" ? "✓ Approve Terms" : "✕ Reject Terms"}
+                        {opt.label}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Comments */}
+                {/* Comments — mandatory for all decisions */}
                 <div>
                   <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>
-                    Comments {decision === "rejected" ? "(required)" : "(optional — helps the AI agent learn)"}
+                    Comments <span style={{ color: "#DC2626" }}>*</span> <span style={{ fontWeight: 400, textTransform: "none" }}>(required — used by the AI agent to learn)</span>
                   </label>
                   <textarea value={comments} onChange={e => setComments(e.target.value)} rows={4}
-                    placeholder={decision === "rejected" ? "Explain why you are rejecting these terms and what changes are needed…" : "Any conditions, feedback or notes for the agent to learn from…"}
-                    style={{ width: "100%", background: C.light, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 13px", fontSize: 12, color: C.dark, fontFamily: FB, resize: "none", outline: "none", boxSizing: "border-box" }} />
+                    placeholder={
+                      decision === "renegotiate"    ? "Explain what needs to be re-negotiated — the agent will use this to re-open with the vendor…" :
+                      decision === "offline_review" ? "Provide context for the offline review…" :
+                      "Provide feedback for the AI agent to learn from for future negotiations…"
+                    }
+                    style={{ width: "100%", background: C.light, border: `1px solid ${!comments.trim() && decision ? "#DC2626" : C.border}`, borderRadius: 8, padding: "9px 13px", fontSize: 12, color: C.dark, fontFamily: FB, resize: "none", outline: "none", boxSizing: "border-box" }} />
+                  {!comments.trim() && decision && (
+                    <p style={{ fontSize: 10, color: "#DC2626", margin: "4px 0 0", fontFamily: FB }}>Comments are required</p>
+                  )}
                 </div>
 
                 {/* Submit */}
                 <button onClick={handleSubmit}
-                  disabled={!decision || (decision === "rejected" && !comments.trim()) || submitting}
+                  disabled={!decision || !comments.trim() || submitting}
                   style={{
                     width: "100%", padding: "13px 0", borderRadius: 12, border: "none",
-                    fontFamily: FB, fontWeight: 700, fontSize: 13, cursor: decision ? "pointer" : "not-allowed",
-                    background: decision && !(decision === "rejected" && !comments.trim()) ? C.orange : C.border,
-                    color:      decision && !(decision === "rejected" && !comments.trim()) ? C.white : C.gray,
+                    fontFamily: FB, fontWeight: 700, fontSize: 13,
+                    cursor: (decision && comments.trim()) ? "pointer" : "not-allowed",
+                    background: (decision && comments.trim()) ? (decision === "renegotiate" ? C.dark : C.orange) : C.border,
+                    color:      (decision && comments.trim()) ? C.white : C.gray,
                   }}>
-                  {submitting ? "Submitting…" : decision === "approved" ? "Confirm Approval" : decision === "rejected" ? "Submit Rejection" : "Select a Decision Above"}
+                  {submitting ? "Submitting…" :
+                   decision === "approved"       ? "Confirm Approval" :
+                   decision === "renegotiate"    ? "Send for Re-negotiation" :
+                   decision === "offline_review" ? "Send for Offline Review" :
+                   "Select a Decision Above"}
                 </button>
 
                 <p style={{ fontSize: 11, color: C.border, textAlign: "center", margin: 0, fontFamily: FB }}>

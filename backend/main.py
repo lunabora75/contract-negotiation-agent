@@ -41,6 +41,8 @@ S_NEG_IN_PROGRESS  = "negotiation_in_progress"
 S_PENDING_APPROVAL = "pending_approval"
 S_APPROVED         = "approved"
 S_REJECTED         = "rejected"
+S_RENEGOTIATE      = "re_negotiate"
+S_PENDING_OFFLINE  = "pending_offline_review"
 
 # ── file text extraction ──────────────────────────────────────────────────
 def _extract_text(filename: str, content: bytes) -> str:
@@ -161,12 +163,17 @@ async def create_session(file: UploadFile = File(...)):
 
 @app.post("/api/sessions/{session_id}/trigger")
 def trigger_negotiation(session_id: str):
-    """Category Manager sends the contract to the Agent for negotiation."""
+    """Category Manager sends the contract to the Agent for negotiation or re-negotiation."""
     session = SESSIONS.get(session_id)
     if not session:
         raise HTTPException(404, "Session not found")
-    if session.get("status") not in (S_UPLOADED, S_SENT_FOR_NEG):
+    if session.get("status") not in (S_UPLOADED, S_SENT_FOR_NEG, S_RENEGOTIATE):
         raise HTTPException(400, f"Cannot trigger from status: {session.get('status')}")
+    # For re-negotiation: reset prior chat so agent starts fresh with the CM reason as context
+    if session.get("status") == S_RENEGOTIATE:
+        session["messages"] = []
+        session["chat"]     = []
+        session["approval"] = None
     session["status"] = S_SENT_FOR_NEG
     return {"session_id": session_id, "status": S_SENT_FOR_NEG}
 
@@ -186,7 +193,11 @@ def initiate_negotiation(session_id: str):
 
     if session.get("status") == S_SENT_FOR_NEG:
         agent       = NegotiationAgent()
-        reply, msgs = agent.run_turn([], sow_text=session["sow_text"])
+        reply, msgs = agent.run_turn(
+            [],
+            sow_text           = session["sow_text"],
+            renegotiate_reason = session.get("renegotiate_reason"),
+        )
         session["messages"] = msgs
         session["chat"]     = [{"role": "agent", "content": reply}]
         session["status"]   = S_NEG_IN_PROGRESS
@@ -260,14 +271,14 @@ def get_summary(session_id: str):
 
 @app.post("/api/sessions/{session_id}/approval")
 def submit_approval(session_id: str, body: ApprovalRequest):
-    """Category Manager approves or rejects the negotiated terms."""
+    """Category Manager approves, requests re-negotiation, or sends for offline review."""
     session = SESSIONS.get(session_id)
     if not session:
         raise HTTPException(404, "Session not found")
 
     decision = body.decision.lower()
-    if decision not in ("approved", "rejected"):
-        raise HTTPException(400, "decision must be 'approved' or 'rejected'")
+    if decision not in ("approved", "renegotiate", "offline_review"):
+        raise HTTPException(400, "decision must be 'approved', 'renegotiate', or 'offline_review'")
 
     session["approval"] = {
         "decision":  decision,
@@ -275,13 +286,21 @@ def submit_approval(session_id: str, body: ApprovalRequest):
         "approver":  body.approver,
         "timestamp": datetime.datetime.utcnow().isoformat(),
     }
-    session["status"] = S_APPROVED if decision == "approved" else S_REJECTED
 
-    # Feed the decision back to the agent for learning
-    rating       = 5 if decision == "approved" else 2
-    outcome      = "agreed" if decision == "approved" else "no_deal"
+    if decision == "approved":
+        session["status"] = S_APPROVED
+        rating, outcome = 5, "agreed"
+    elif decision == "renegotiate":
+        session["status"]              = S_RENEGOTIATE
+        session["renegotiate_reason"]  = body.comments
+        rating, outcome = 2, "no_deal"
+    else:  # offline_review
+        session["status"] = S_PENDING_OFFLINE
+        rating, outcome = 3, "partial"
+
+    # Feed the decision back to the agent for self-learning
     feedback_msg = (
-        f"Category Manager approval decision received: {decision.upper()}. "
+        f"Category Manager decision: {decision.upper()}. "
         f"Approver: {body.approver or 'anonymous'}. "
         f"Comments: {body.comments or 'none'}. "
         f"Please call the save_feedback tool with rating={rating}, "
