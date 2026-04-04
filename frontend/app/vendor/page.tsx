@@ -104,11 +104,14 @@ function MdContent({ text }: { text: string }) {
         if (block.type === "table") return <MdTable key={bi} lines={block.lines} />;
         const line = block.content;
         if (!line.trim()) return <div key={bi} className="h-1" />;
+        // Skip bare separator lines like "--" or "---" — render as thin spacer
+        if (/^[\s]*-{2,}\s*$/.test(line)) return <div key={bi} className="h-2" />;
         if (/^#{2,3}\s/.test(line))
           return <p key={bi} className="font-bold text-sm mt-3 mb-1" style={{ color: C.dark, fontFamily: FONT_HEAD }}>
             {line.replace(/^#+\s/, "")}
           </p>;
-        if (/^[\s]*[-•▸]/.test(line))
+        // Require a whitespace after the bullet char so "--" is never treated as a bullet
+        if (/^[\s]*[-•▸]\s/.test(line))
           return (
             <div key={bi} className="flex gap-2 text-sm">
               <span className="shrink-0 mt-0.5 text-xs" style={{ color: C.orange }}>▸</span>
