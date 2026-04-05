@@ -60,12 +60,12 @@ export default function LandingPage() {
     <div style={{ height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column", fontFamily: FB, background: C.light }}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
-      <header style={{ background: C.dark, flexShrink: 0 }}>
+      <header style={{ background: C.white, flexShrink: 0 }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {/* MResult logo */}
             <img src="/mresult-logo-dark.png" alt="MResult" style={{ height: 36, width: "auto", display: "block" }} />
-            <span style={{ background: C.orange, color: C.white, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, fontFamily: FB }}>
+            <span style={{ background: C.dark, color: C.orange, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, fontFamily: FB, border: `1px solid ${C.orange}` }}>
               Contract Negotiation
             </span>
           </div>
@@ -79,7 +79,7 @@ export default function LandingPage() {
               localStorage.clear();
               window.location.reload();
             }}
-            style={{ fontSize: 11, fontWeight: 600, padding: "5px 14px", borderRadius: 20, background: "rgba(255,255,255,0.08)", color: C.gray, border: "1px solid #1a2733", cursor: "pointer", fontFamily: FB }}
+            style={{ fontSize: 11, fontWeight: 600, padding: "5px 14px", borderRadius: 20, background: C.light, color: C.gray, border: `1px solid ${C.border}`, cursor: "pointer", fontFamily: FB }}
             title="Clear all contracts, negotiations and history">
             ↺ Reset All Data
           </button>
@@ -281,10 +281,10 @@ export default function LandingPage() {
       </main>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer style={{ background: C.dark, flexShrink: 0, borderTop: "1px solid #1a2733" }}>
+      <footer style={{ background: C.white, flexShrink: 0, borderTop: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 40, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontFamily: FH, fontWeight: 700, fontSize: 13, color: C.white }}>MResult</span>
-          <span style={{ fontSize: 11, color: "#4a6070" }}>AI Powered Contract Negotiation</span>
+          <span style={{ fontFamily: FH, fontWeight: 700, fontSize: 13, color: C.dark }}>MResult</span>
+          <span style={{ fontSize: 11, color: C.gray }}>AI Powered Contract Negotiation</span>
         </div>
       </footer>
     </div>

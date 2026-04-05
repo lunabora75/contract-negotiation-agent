@@ -202,21 +202,21 @@ export default function ManagerPage() {
     <div style={{ minHeight: "100vh", background: C.light, fontFamily: FONT_BODY }}>
 
       {/* ── Navbar ─────────────────────────────────────────────────────── */}
-      <header style={{ background: C.dark }}>
+      <header style={{ background: C.white }}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => router.push("/")} className="text-sm transition-opacity hover:opacity-70"
               style={{ color: C.orange, fontFamily: FONT_BODY }}>← Home</button>
-            <div className="w-px h-4" style={{ background: "#1a2733" }} />
-            <span className="font-bold text-xl tracking-tight" style={{ color: C.white, fontFamily: FONT_HEAD }}>MResult</span>
+            <div className="w-px h-4" style={{ background: C.border }} />
+            <span className="font-bold text-xl tracking-tight" style={{ color: C.dark, fontFamily: FONT_HEAD }}>MResult</span>
             <span className="text-xs font-medium px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(248,151,56,0.15)", color: C.orange, border: "1px solid rgba(248,151,56,0.3)" }}>
+              style={{ background: C.dark, color: C.orange, border: `1px solid ${C.orange}` }}>
               Category Manager
             </span>
           </div>
           <button onClick={loadSessions}
             className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
-            style={{ background: "#1a2733", color: C.gray, fontFamily: FONT_BODY }}>
+            style={{ background: C.light, color: C.gray, fontFamily: FONT_BODY }}>
             ↻ Refresh
           </button>
         </div>
@@ -440,10 +440,10 @@ export default function ManagerPage() {
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────── */}
-      <footer className="mt-12" style={{ background: C.dark, borderTop: "1px solid #1a2733" }}>
+      <footer className="mt-12" style={{ background: C.white, borderTop: `1px solid ${C.border}` }}>
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="font-bold text-sm" style={{ color: C.white, fontFamily: FONT_HEAD }}>MResult</span>
-          <span className="text-xs" style={{ color: "#4a6070" }}>AI Powered Contract Negotiation</span>
+          <span className="font-bold text-sm" style={{ color: C.dark, fontFamily: FONT_HEAD }}>MResult</span>
+          <span className="text-xs" style={{ color: C.gray }}>AI Powered Contract Negotiation</span>
         </div>
       </footer>
 

@@ -279,16 +279,16 @@ export default function ApprovalPage() {
     <div style={{ minHeight: "100vh", background: C.light, fontFamily: FB, display: "flex", flexDirection: "column" }}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
-      <header style={{ background: C.dark, position: "sticky", top: 0, zIndex: 50 }}>
+      <header style={{ background: C.white, position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button onClick={() => router.push("/manager")}
               style={{ fontSize: 13, color: C.orange, background: "none", border: "none", cursor: "pointer", fontFamily: FB }}>
               ← Manager
             </button>
-            <div style={{ width: 1, height: 16, background: "#1a2733" }} />
-            <span style={{ fontFamily: FH, fontWeight: 800, fontSize: 20, color: C.white }}>MResult</span>
-            <span style={{ fontSize: 11, fontWeight: 600, background: "rgba(248,151,56,0.15)", color: C.orange, border: "1px solid rgba(248,151,56,0.3)", borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
+            <div style={{ width: 1, height: 16, background: C.border }} />
+            <span style={{ fontFamily: FH, fontWeight: 800, fontSize: 20, color: C.dark }}>MResult</span>
+            <span style={{ fontSize: 11, fontWeight: 600, background: C.dark, color: C.orange, border: `1px solid ${C.orange}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
               Contract Approval
             </span>
           </div>

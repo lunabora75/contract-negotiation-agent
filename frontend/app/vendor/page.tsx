@@ -269,15 +269,15 @@ export default function VendorPage() {
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.light, fontFamily: FONT_BODY }}>
 
       {/* ── Navbar ─────────────────────────────────────────────────────── */}
-      <header style={{ background: C.dark, flexShrink: 0 }}>
+      <header style={{ background: C.white, flexShrink: 0 }}>
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => router.push("/")} className="text-sm transition-opacity hover:opacity-70"
               style={{ color: C.orange, fontFamily: FONT_BODY }}>← Home</button>
-            <div className="w-px h-4" style={{ background: "#1a2733" }} />
-            <span className="font-bold text-xl tracking-tight" style={{ color: C.white, fontFamily: FONT_HEAD }}>MResult</span>
+            <div className="w-px h-4" style={{ background: C.border }} />
+            <span className="font-bold text-xl tracking-tight" style={{ color: C.dark, fontFamily: FONT_HEAD }}>MResult</span>
             <span className="text-xs font-medium px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(248,151,56,0.15)", color: C.orange, border: "1px solid rgba(248,151,56,0.3)" }}>
+              style={{ background: C.dark, color: C.orange, border: `1px solid ${C.orange}` }}>
               Vendor Portal
             </span>
           </div>
