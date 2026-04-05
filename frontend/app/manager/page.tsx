@@ -72,12 +72,23 @@ export default function ManagerPage() {
   const [filter, setFilter] = useState<string>("all");
 
   // Offline notes modal
-  const [offlineModal,  setOfflineModal]  = useState<{ session_id: string; filename: string } | null>(null);
-  const [offlineNotes,  setOfflineNotes]  = useState("");
-  const [offlineSaving, setOfflineSaving] = useState(false);
+  interface NoteEntry { notes: string; timestamp: string; }
+  const [offlineModal,     setOfflineModal]     = useState<{ session_id: string; filename: string } | null>(null);
+  const [offlineNotes,     setOfflineNotes]     = useState("");
+  const [offlineHistory,   setOfflineHistory]   = useState<NoteEntry[]>([]);
+  const [offlineSaving,    setOfflineSaving]    = useState(false);
 
-  const openOfflineModal = (s: Session) => { setOfflineModal({ session_id: s.session_id, filename: s.filename }); setOfflineNotes(""); };
-  const closeOfflineModal = () => { setOfflineModal(null); setOfflineNotes(""); };
+  const openOfflineModal = async (s: Session) => {
+    setOfflineModal({ session_id: s.session_id, filename: s.filename });
+    setOfflineNotes("");
+    // Load existing notes history
+    try {
+      const res  = await fetch(`${API}/api/sessions/${s.session_id}/notes`);
+      const data = await res.json();
+      setOfflineHistory(data.notes ?? []);
+    } catch { setOfflineHistory([]); }
+  };
+  const closeOfflineModal = () => { setOfflineModal(null); setOfflineNotes(""); setOfflineHistory([]); };
 
   const saveOfflineNotes = async () => {
     if (!offlineModal || !offlineNotes.trim() || offlineSaving) return;
@@ -87,8 +98,11 @@ export default function ManagerPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes: offlineNotes }),
       });
-      closeOfflineModal();
-      await loadSessions();
+      // Refresh history, keep modal open
+      const res  = await fetch(`${API}/api/sessions/${offlineModal.session_id}/notes`);
+      const data = await res.json();
+      setOfflineHistory(data.notes ?? []);
+      setOfflineNotes("");
     } catch { alert("Failed to save notes."); }
     finally { setOfflineSaving(false); }
   };
@@ -99,7 +113,7 @@ export default function ManagerPage() {
     try {
       await fetch(`${API}/api/sessions/${offlineModal.session_id}/approval`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision: "approved", comments: offlineNotes, approver: "" }),
+        body: JSON.stringify({ decision: "approved", comments: offlineNotes, approver: "Offline Review" }),
       });
       closeOfflineModal();
       await loadSessions();
@@ -284,8 +298,8 @@ export default function ManagerPage() {
                   <p className="font-semibold text-[11px]" style={{ color: C.dark, fontFamily: FONT_HEAD }}>{c.name}</p>
                   <p className="text-[9px]" style={{ color: C.gray, fontFamily: FONT_BODY }}>{c.desc}</p>
                   <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: C.light, color: C.gray, border: `1px solid ${C.border}`, fontFamily: FONT_BODY }}>
-                    Coming Soon
+                    style={{ background: C.light, color: C.border, border: `1px solid ${C.border}`, fontFamily: FONT_BODY }}>
+                    Connect
                   </span>
                 </div>
               ))}
@@ -454,23 +468,46 @@ export default function ManagerPage() {
 
             {/* Body */}
             <div className="px-6 py-5 space-y-4">
+
+              {/* Previous notes history */}
+              {offlineHistory.length > 0 && (
+                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
+                  <div className="px-3 py-2 flex items-center gap-2" style={{ background: C.light, borderBottom: `1px solid ${C.border}` }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.gray, fontFamily: FONT_BODY }}>
+                      Previous Notes ({offlineHistory.length})
+                    </span>
+                  </div>
+                  <div className="divide-y divide-gray-200 max-h-40 overflow-y-auto">
+                    {offlineHistory.map((n, i) => (
+                      <div key={i} className="px-3 py-2.5" style={{ background: i % 2 === 0 ? C.white : "#FAFAFA" }}>
+                        <p className="text-[10px] mb-1" style={{ color: C.gray, fontFamily: FONT_BODY }}>
+                          {new Date(n.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                        <p className="text-xs leading-relaxed" style={{ color: C.dark, fontFamily: FONT_BODY }}>{n.notes}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New note */}
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest block mb-2"
                   style={{ color: C.gray, fontFamily: FONT_BODY }}>
-                  Notes / Findings from Offline Review
+                  {offlineHistory.length > 0 ? "Add New Note" : "Notes / Findings from Offline Review"}
                 </label>
                 <textarea
                   value={offlineNotes}
                   onChange={e => setOfflineNotes(e.target.value)}
-                  rows={6}
+                  rows={5}
                   placeholder="Document your findings, clarifications or conditions from the offline review…"
                   className="w-full rounded-xl p-3 text-sm resize-none outline-none"
                   style={{ background: C.light, border: `1px solid ${C.border}`, color: C.dark, fontFamily: FONT_BODY }}
                 />
               </div>
               <p className="text-[10px]" style={{ color: C.gray, fontFamily: FONT_BODY }}>
-                <strong>Save</strong> keeps the contract in Offline Review with your notes recorded.&nbsp;
-                <strong>Approve</strong> marks the contract as approved using your notes as the approval comment.
+                <strong>Save</strong> records the note and keeps the contract in Offline Review (modal stays open).&nbsp;
+                <strong>Approve</strong> marks the contract as approved using your latest note as the approval comment.
               </p>
             </div>
 

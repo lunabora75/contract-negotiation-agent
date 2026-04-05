@@ -327,9 +327,18 @@ def submit_approval(session_id: str, body: ApprovalRequest):
 class NotesRequest(BaseModel):
     notes: str
 
+@app.get("/api/sessions/{session_id}/notes")
+def get_offline_notes(session_id: str):
+    """Return all saved offline review notes for a session."""
+    session = SESSIONS.get(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+    return {"notes": session.get("offline_notes", [])}
+
+
 @app.post("/api/sessions/{session_id}/notes")
 def save_offline_notes(session_id: str, body: NotesRequest):
-    """Save Category Manager offline review notes without changing the contract status."""
+    """Append a Category Manager offline review note (does not change contract status)."""
     session = SESSIONS.get(session_id)
     if not session:
         raise HTTPException(404, "Session not found")
@@ -338,6 +347,13 @@ def save_offline_notes(session_id: str, body: NotesRequest):
         "timestamp":  datetime.datetime.utcnow().isoformat(),
     })
     return {"saved": True, "status": session["status"]}
+
+
+@app.post("/api/reset")
+def reset_all_data():
+    """Clear all sessions and in-memory state — for demo / development resets."""
+    SESSIONS.clear()
+    return {"reset": True}
 
 
 @app.post("/api/sessions/{session_id}/feedback")

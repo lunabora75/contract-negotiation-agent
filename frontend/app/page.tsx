@@ -61,11 +61,28 @@ export default function LandingPage() {
 
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
       <header style={{ background: C.dark, flexShrink: 0 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontFamily: FH, fontWeight: 800, fontSize: 22, color: C.white, letterSpacing: "-0.5px" }}>MResult</span>
-          <span style={{ background: C.orange, color: C.white, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20 }}>
-            Contract Negotiation
-          </span>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* MResult logo */}
+            <img src="/mresult-logo-dark.png" alt="MResult" style={{ height: 36, width: "auto", display: "block" }} />
+            <span style={{ background: C.orange, color: C.white, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, fontFamily: FB }}>
+              Contract Negotiation
+            </span>
+          </div>
+          {/* Reset all data button */}
+          <button
+            onClick={async () => {
+              if (!confirm("Reset all application data? This will clear all contracts, negotiations and history.")) return;
+              try {
+                await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/reset`, { method: "POST" });
+              } catch { /* ignore if offline */ }
+              localStorage.clear();
+              window.location.reload();
+            }}
+            style={{ fontSize: 11, fontWeight: 600, padding: "5px 14px", borderRadius: 20, background: "rgba(255,255,255,0.08)", color: C.gray, border: "1px solid #1a2733", cursor: "pointer", fontFamily: FB }}
+            title="Clear all contracts, negotiations and history">
+            ↺ Reset All Data
+          </button>
         </div>
         <div style={{ height: 2, background: `linear-gradient(90deg, ${C.orange} 0%, ${C.dark} 100%)` }} />
       </header>
