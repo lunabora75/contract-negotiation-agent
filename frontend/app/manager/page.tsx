@@ -71,6 +71,42 @@ export default function ManagerPage() {
   // Filter
   const [filter, setFilter] = useState<string>("all");
 
+  // Offline notes modal
+  const [offlineModal,  setOfflineModal]  = useState<{ session_id: string; filename: string } | null>(null);
+  const [offlineNotes,  setOfflineNotes]  = useState("");
+  const [offlineSaving, setOfflineSaving] = useState(false);
+
+  const openOfflineModal = (s: Session) => { setOfflineModal({ session_id: s.session_id, filename: s.filename }); setOfflineNotes(""); };
+  const closeOfflineModal = () => { setOfflineModal(null); setOfflineNotes(""); };
+
+  const saveOfflineNotes = async () => {
+    if (!offlineModal || !offlineNotes.trim() || offlineSaving) return;
+    setOfflineSaving(true);
+    try {
+      await fetch(`${API}/api/sessions/${offlineModal.session_id}/notes`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: offlineNotes }),
+      });
+      closeOfflineModal();
+      await loadSessions();
+    } catch { alert("Failed to save notes."); }
+    finally { setOfflineSaving(false); }
+  };
+
+  const approveFromOffline = async () => {
+    if (!offlineModal || !offlineNotes.trim() || offlineSaving) return;
+    setOfflineSaving(true);
+    try {
+      await fetch(`${API}/api/sessions/${offlineModal.session_id}/approval`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision: "approved", comments: offlineNotes, approver: "" }),
+      });
+      closeOfflineModal();
+      await loadSessions();
+    } catch { alert("Failed to approve."); }
+    finally { setOfflineSaving(false); }
+  };
+
   const loadSessions = useCallback(async () => {
     try {
       const res  = await fetch(`${API}/api/sessions`);
@@ -175,92 +211,86 @@ export default function ManagerPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
 
-        {/* ── Contract Source Integration section ──────────────────────── */}
+        {/* ── Contract Source Integration — compact horizontal layout ─── */}
         <section>
-          <h2 className="font-bold text-lg mb-1" style={{ color: C.dark, fontFamily: FONT_HEAD }}>
-            Contract Source Integration
-          </h2>
-          <p className="text-xs mb-4" style={{ color: C.gray, fontFamily: FONT_BODY }}>
-            Ingest contracts from multiple sources. Click a connector to upload or connect.
-          </p>
+          <div className="flex items-baseline gap-3 mb-3">
+            <h2 className="font-bold text-lg" style={{ color: C.dark, fontFamily: FONT_HEAD }}>Contract Source Integration</h2>
+            <span className="text-xs" style={{ color: C.gray, fontFamily: FONT_BODY }}>Ingest contracts from any source</span>
+          </div>
 
-          {/* Active connector: File Upload */}
-          <div className="rounded-2xl p-5 mb-4" style={{ background: C.white, border: `2px solid ${C.orange}` }}>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-lg">📁</span>
-              <span className="font-bold text-sm" style={{ color: C.dark, fontFamily: FONT_HEAD }}>File Upload</span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full ml-1"
-                style={{ background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}` }}>Active</span>
-            </div>
-            {/* --- existing drag-drop upload UI goes here, unchanged --- */}
-            <div
-              onDragOver={e => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={onDrop}
-              onClick={() => !file && fileRef.current?.click()}
-              className="rounded-xl border-2 border-dashed p-8 text-center transition-all cursor-pointer"
-              style={{
-                borderColor: dragging ? C.orange : file ? C.orange : C.border,
-                background:  dragging ? C.orangeBg : file ? C.orangeBg : C.light,
-              }}>
-              <input ref={fileRef} type="file" accept={ACCEPT} className="hidden"
-                onChange={e => { const f = e.target.files?.[0]; if (f) pickFile(f); }} />
-              {file ? (
-                <div className="space-y-2">
-                  <div className="text-3xl">📄</div>
-                  <p className="font-semibold text-sm" style={{ color: C.dark }}>{file.name}</p>
-                  <p className="text-xs" style={{ color: C.gray }}>{fmtBytes(file.size)}</p>
-                  <button onClick={e => { e.stopPropagation(); setFile(null); if (fileRef.current) fileRef.current.value = ""; }}
-                    className="text-xs underline" style={{ color: C.gray }}>Remove</button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="text-4xl">📁</div>
-                  <p className="font-semibold text-sm" style={{ color: C.dark }}>
-                    Drag & drop your SOW here or <span style={{ color: C.orange }}>browse</span>
-                  </p>
-                  <p className="text-xs" style={{ color: C.gray }}>Supports PDF, DOCX, TXT · Max {MAX_MB} MB</p>
-                </div>
+          <div className="flex gap-4 items-stretch">
+
+            {/* ── Left: Active File Upload (≈40%) ─────────────────────── */}
+            <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ width: "40%", flexShrink: 0, background: C.white, border: `2px solid ${C.orange}` }}>
+              <div className="flex items-center gap-2">
+                <span>📁</span>
+                <span className="font-bold text-sm" style={{ color: C.dark, fontFamily: FONT_HEAD }}>File Upload</span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}` }}>Active</span>
+              </div>
+
+              {/* Compact drop zone */}
+              <div
+                onDragOver={e => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={onDrop}
+                onClick={() => !file && fileRef.current?.click()}
+                className="rounded-xl border-2 border-dashed p-4 text-center transition-all cursor-pointer flex-1 flex items-center justify-center"
+                style={{ borderColor: dragging ? C.orange : file ? C.orange : C.border, background: dragging ? C.orangeBg : file ? C.orangeBg : C.light }}>
+                <input ref={fileRef} type="file" accept={ACCEPT} className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) pickFile(f); }} />
+                {file ? (
+                  <div className="space-y-1">
+                    <div className="text-2xl">📄</div>
+                    <p className="font-semibold text-xs" style={{ color: C.dark }}>{file.name}</p>
+                    <p className="text-[10px]" style={{ color: C.gray }}>{fmtBytes(file.size)}</p>
+                    <button onClick={e => { e.stopPropagation(); setFile(null); if (fileRef.current) fileRef.current.value = ""; }}
+                      className="text-[10px] underline" style={{ color: C.gray }}>Remove</button>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="text-2xl">📁</div>
+                    <p className="text-xs" style={{ color: C.dark }}>Drop SOW or <span style={{ color: C.orange }}>browse</span></p>
+                    <p className="text-[10px]" style={{ color: C.gray }}>PDF, DOCX, TXT · Max {MAX_MB} MB</p>
+                  </div>
+                )}
+              </div>
+              {uploadError && (
+                <p className="text-[10px] px-2 py-1.5 rounded-lg" style={{ background: "#FFF4F4", color: "#DC2626", border: "1px solid #FECACA" }}>
+                  ⚠️ {uploadError}
+                </p>
               )}
-            </div>
-            {uploadError && (
-              <p className="text-xs mt-3 px-3 py-2 rounded-lg" style={{ background: "#FFF4F4", color: "#DC2626", border: "1px solid #FECACA" }}>
-                ⚠️ {uploadError}
-              </p>
-            )}
-            <div className="mt-4">
               <button onClick={upload} disabled={!file || uploading}
-                className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                className="py-2.5 rounded-xl font-semibold text-xs transition-all"
                 style={{ background: file ? C.dark : C.border, color: file ? C.white : C.gray, cursor: file ? "pointer" : "not-allowed", fontFamily: FONT_BODY }}>
                 {uploading ? "Uploading…" : "Upload Contract"}
               </button>
             </div>
-          </div>
 
-          {/* Placeholder connectors grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {[
-              { icon: "🔷", name: "SAP Ariba",    desc: "ERP procurement" },
-              { icon: "🟠", name: "ORO Labs",     desc: "Procurement platform" },
-              { icon: "📂", name: "SharePoint",   desc: "Microsoft 365" },
-              { icon: "💾", name: "OneDrive",     desc: "File storage" },
-              { icon: "🟢", name: "Google Drive", desc: "Cloud storage" },
-              { icon: "☁️", name: "AWS S3",       desc: "Object storage" },
-            ].map(c => (
-              <div key={c.name}
-                className="rounded-xl p-4 flex flex-col items-center text-center gap-2 cursor-not-allowed select-none"
-                style={{ background: C.white, border: `1px solid ${C.border}`, opacity: 0.55 }}>
-                <span className="text-2xl">{c.icon}</span>
-                <div>
-                  <p className="font-semibold text-xs" style={{ color: C.dark, fontFamily: FONT_HEAD }}>{c.name}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: C.gray, fontFamily: FONT_BODY }}>{c.desc}</p>
+            {/* ── Right: Connector placeholders (≈60%) ─────────────────── */}
+            <div className="flex-1 grid grid-cols-3 gap-3">
+              {[
+                { icon: "🔷", name: "SAP Ariba",    desc: "ERP procurement" },
+                { icon: "🟠", name: "ORO Labs",     desc: "Procurement platform" },
+                { icon: "📂", name: "SharePoint",   desc: "Microsoft 365" },
+                { icon: "💾", name: "OneDrive",     desc: "File storage" },
+                { icon: "🟢", name: "Google Drive", desc: "Cloud storage" },
+                { icon: "☁️", name: "AWS S3",       desc: "Object storage" },
+              ].map(c => (
+                <div key={c.name}
+                  className="rounded-xl p-3 flex flex-col items-center text-center gap-1.5 cursor-not-allowed select-none"
+                  style={{ background: C.white, border: `1px solid ${C.border}`, opacity: 0.55 }}>
+                  <span className="text-xl">{c.icon}</span>
+                  <p className="font-semibold text-[11px]" style={{ color: C.dark, fontFamily: FONT_HEAD }}>{c.name}</p>
+                  <p className="text-[9px]" style={{ color: C.gray, fontFamily: FONT_BODY }}>{c.desc}</p>
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ background: C.light, color: C.gray, border: `1px solid ${C.border}`, fontFamily: FONT_BODY }}>
+                    Coming Soon
+                  </span>
                 </div>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: C.light, color: C.gray, border: `1px solid ${C.border}`, fontFamily: FONT_BODY }}>
-                  Coming Soon
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
+
           </div>
         </section>
 
@@ -362,11 +392,18 @@ export default function ManagerPage() {
                           {s.status === "negotiation_in_progress" && (
                             <span className="text-xs" style={{ color: "#D97706" }}>Negotiation active</span>
                           )}
-                          {(s.status === "pending_approval" || s.status === "pending_offline_review") && (
+                          {s.status === "pending_approval" && (
                             <button onClick={() => router.push(`/approval/${s.session_id}`)}
                               className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                               style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY }}>
-                              {s.status === "pending_offline_review" ? "Add Offline Notes →" : "Review & Approve →"}
+                              Review & Approve →
+                            </button>
+                          )}
+                          {s.status === "pending_offline_review" && (
+                            <button onClick={() => openOfflineModal(s)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                              style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY }}>
+                              Add Offline Notes →
                             </button>
                           )}
                           {(s.status === "approved" || s.status === "rejected") && (
@@ -395,6 +432,73 @@ export default function ManagerPage() {
           <span className="text-xs" style={{ color: "#4a6070" }}>AI Powered Contract Negotiation</span>
         </div>
       </footer>
+
+      {/* ── Offline Notes Modal ──────────────────────────────────────────── */}
+      {offlineModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(9,19,27,0.55)", backdropFilter: "blur(4px)" }}>
+          <div className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: C.white, border: `1px solid ${C.border}` }}>
+
+            {/* Header */}
+            <div className="px-6 py-4 flex items-center justify-between"
+              style={{ background: C.dark, borderBottom: `2px solid ${C.orange}` }}>
+              <div>
+                <p className="font-bold text-sm" style={{ color: C.white, fontFamily: FONT_HEAD }}>Offline Review Notes</p>
+                <p className="text-[11px] mt-0.5 truncate max-w-xs" style={{ color: C.gray }}>{offlineModal.filename}</p>
+              </div>
+              <button onClick={closeOfflineModal}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-sm transition-opacity hover:opacity-70"
+                style={{ background: "#1a2733", color: C.gray }}>✕</button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest block mb-2"
+                  style={{ color: C.gray, fontFamily: FONT_BODY }}>
+                  Notes / Findings from Offline Review
+                </label>
+                <textarea
+                  value={offlineNotes}
+                  onChange={e => setOfflineNotes(e.target.value)}
+                  rows={6}
+                  placeholder="Document your findings, clarifications or conditions from the offline review…"
+                  className="w-full rounded-xl p-3 text-sm resize-none outline-none"
+                  style={{ background: C.light, border: `1px solid ${C.border}`, color: C.dark, fontFamily: FONT_BODY }}
+                />
+              </div>
+              <p className="text-[10px]" style={{ color: C.gray, fontFamily: FONT_BODY }}>
+                <strong>Save</strong> keeps the contract in Offline Review with your notes recorded.&nbsp;
+                <strong>Approve</strong> marks the contract as approved using your notes as the approval comment.
+              </p>
+            </div>
+
+            {/* Footer buttons */}
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={closeOfflineModal}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold flex-1"
+                style={{ background: C.light, color: C.gray, border: `1px solid ${C.border}`, fontFamily: FONT_BODY }}>
+                Close
+              </button>
+              <button
+                onClick={saveOfflineNotes}
+                disabled={!offlineNotes.trim() || offlineSaving}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold flex-1 transition-all"
+                style={{ background: !offlineNotes.trim() ? C.border : C.dark, color: !offlineNotes.trim() ? C.gray : C.white, cursor: !offlineNotes.trim() ? "not-allowed" : "pointer", fontFamily: FONT_BODY }}>
+                {offlineSaving ? "Saving…" : "Save Notes"}
+              </button>
+              <button
+                onClick={approveFromOffline}
+                disabled={!offlineNotes.trim() || offlineSaving}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold flex-1 transition-all"
+                style={{ background: !offlineNotes.trim() ? C.border : C.orange, color: !offlineNotes.trim() ? C.gray : C.white, cursor: !offlineNotes.trim() ? "not-allowed" : "pointer", fontFamily: FONT_BODY }}>
+                {offlineSaving ? "Approving…" : "Approve →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

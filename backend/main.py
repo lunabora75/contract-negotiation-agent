@@ -211,6 +211,7 @@ def initiate_negotiation(session_id: str):
         "session_id":           session_id,
         "filename":             session["filename"],
         "chat":                 session.get("chat", []),
+        "prior_chat":           session.get("prior_chat", []),   # previous round history
         "status":               session["status"],
         "negotiation_complete": _negotiation_complete(last_msg),
     }
@@ -311,8 +312,9 @@ def submit_approval(session_id: str, body: ApprovalRequest):
     )
     session["messages"] = updated
 
-    # For renegotiate: reset session state so agent starts fresh with vendor
+    # For renegotiate: preserve prior chat for vendor context, then reset
     if decision == "renegotiate":
+        session["prior_chat"]         = list(session.get("chat", []))   # keep for vendor history panel
         session["messages"]           = []
         session["chat"]               = []
         session["approval"]           = None
@@ -320,6 +322,22 @@ def submit_approval(session_id: str, body: ApprovalRequest):
         session["status"]             = S_SENT_FOR_RENEG
 
     return {"saved": True, "decision": decision, "status": session["status"]}
+
+
+class NotesRequest(BaseModel):
+    notes: str
+
+@app.post("/api/sessions/{session_id}/notes")
+def save_offline_notes(session_id: str, body: NotesRequest):
+    """Save Category Manager offline review notes without changing the contract status."""
+    session = SESSIONS.get(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+    session.setdefault("offline_notes", []).append({
+        "notes":      body.notes,
+        "timestamp":  datetime.datetime.utcnow().isoformat(),
+    })
+    return {"saved": True, "status": session["status"]}
 
 
 @app.post("/api/sessions/{session_id}/feedback")

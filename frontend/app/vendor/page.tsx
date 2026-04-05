@@ -181,6 +181,8 @@ export default function VendorPage() {
 
   // Chat
   const [messages,         setMessages]         = useState<ChatMessage[]>([]);
+  const [priorChat,        setPriorChat]        = useState<ChatMessage[]>([]);
+  const [showPriorChat,    setShowPriorChat]    = useState(false);
   const [input,            setInput]            = useState("");
   const [loading,          setLoading]          = useState(false);
   const [negotiationDone,  setNegotiationDone]  = useState(false);
@@ -228,6 +230,7 @@ export default function VendorPage() {
       const data = await res.json();
       setActiveSession(session);
       setMessages(data.chat || []);
+      setPriorChat(data.prior_chat || []);
       if (data.negotiation_complete) setNegotiationDone(true);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to connect.");
@@ -420,9 +423,43 @@ export default function VendorPage() {
               <div className="text-center">
                 <span className="inline-block text-xs px-4 py-1.5 rounded-full"
                   style={{ background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}` }}>
-                  🤝 Negotiating: {activeSession.filename}
+                  🤝 {priorChat.length > 0 ? "Re-negotiating" : "Negotiating"}: {activeSession.filename}
                 </span>
               </div>
+
+              {/* Prior round chat history — collapsible */}
+              {priorChat.length > 0 && (
+                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #C7D2FE" }}>
+                  <button
+                    onClick={() => setShowPriorChat(v => !v)}
+                    className="w-full flex items-center justify-between px-4 py-3"
+                    style={{ background: "#EEF2FF", border: "none", cursor: "pointer" }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">🕐</span>
+                      <span className="text-xs font-semibold" style={{ color: "#4F46E5", fontFamily: FONT_HEAD }}>
+                        Previous Negotiation History ({priorChat.length} messages)
+                      </span>
+                    </div>
+                    <span className="text-xs" style={{ color: "#6366F1" }}>{showPriorChat ? "▲ Hide" : "▼ Show"}</span>
+                  </button>
+                  {showPriorChat && (
+                    <div className="divide-y" style={{ borderTop: "1px solid #C7D2FE" }}>
+                      {priorChat.map((m, i) => (
+                        <div key={i} className="px-4 py-3" style={{ background: i % 2 === 0 ? "#F8F8FF" : "#FAFAFA" }}>
+                          <span className="text-[10px] font-bold uppercase tracking-wider block mb-1"
+                            style={{ color: m.role === "agent" ? "#4F46E5" : C.gray }}>
+                            {m.role === "agent" ? "AI Negotiation Agent" : "You (Vendor)"}
+                          </span>
+                          <p className="text-xs leading-relaxed" style={{ color: C.dark }}>{m.content.slice(0, 300)}{m.content.length > 300 ? "…" : ""}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="px-4 py-2 text-center" style={{ background: "#EEF2FF", borderTop: "1px solid #C7D2FE" }}>
+                    <span className="text-[10px]" style={{ color: "#6366F1" }}>↓ Re-negotiation begins below</span>
+                  </div>
+                </div>
+              )}
 
               {messages.map((m, i) => <Bubble key={i} msg={m} />)}
               {loading && <Typing />}

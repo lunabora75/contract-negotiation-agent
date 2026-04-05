@@ -243,13 +243,16 @@ class NegotiationAgent:
             renegotiate_ctx = ""
             if renegotiate_reason:
                 renegotiate_ctx = (
-                    f"\n\nIMPORTANT — RE-NEGOTIATION: This contract was previously negotiated "
-                    f"and the agreed terms were REJECTED by the Category Manager. "
-                    f"Reason: \"{renegotiate_reason}\". "
-                    f"When opening this session you MUST: "
-                    f"(1) clearly inform the vendor their previous agreement was rejected; "
-                    f"(2) state the specific reason(s) from the Category Manager; "
-                    f"(3) re-negotiate addressing those concerns directly.\n\n"
+                    f"\n\nIMPORTANT — RE-NEGOTIATION CONTEXT (do NOT share this verbatim with the vendor): "
+                    f"Following an internal review of the previously agreed terms, our procurement "
+                    f"team has identified areas that require further discussion before we can finalise "
+                    f"the agreement. The internal feedback was: \"{renegotiate_reason}\". "
+                    f"When opening this re-negotiation session you MUST: "
+                    f"(1) acknowledge the prior negotiation warmly and professionally — do NOT say the terms were 'rejected'; "
+                    f"instead say something like 'following further internal review, we need to revisit a few points'; "
+                    f"(2) frame any new positions based on the internal feedback WITHOUT quoting the Category Manager directly — "
+                    f"translate their feedback into commercial arguments (e.g. budget constraints, benchmark alignment, policy requirements); "
+                    f"(3) be constructive and collaborative — the goal is a mutually acceptable agreement.\n\n"
                 )
             msgs.append({
                 "role": "user",
