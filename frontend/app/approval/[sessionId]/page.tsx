@@ -287,7 +287,9 @@ export default function ApprovalPage() {
               ← Manager
             </button>
             <div style={{ width: 1, height: 16, background: C.border }} />
-            <span style={{ fontFamily: FH, fontWeight: 800, fontSize: 20, color: C.dark }}>MResult</span>
+            <div style={{ background: C.dark, borderRadius: 10, padding: "4px 10px", display: "inline-flex", alignItems: "center" }}>
+              <img src="/mresult-logo-dark.png" alt="MResult" style={{ height: 26, width: "auto", display: "block" }} />
+            </div>
             <span style={{ fontSize: 11, fontWeight: 600, background: C.dark, color: C.orange, border: `1px solid ${C.orange}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
               Contract Approval
             </span>
