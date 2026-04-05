@@ -606,10 +606,15 @@ export default function ApprovalPage() {
 
                 {/* Name */}
                 <div>
-                  <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>Your Name (optional)</label>
+                  <label style={{ fontSize: 10, fontWeight: 700, color: C.gray, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: FB }}>
+                    Your Name <span style={{ color: C.orange }}>*</span>
+                  </label>
                   <input type="text" value={approver} onChange={e => setApprover(e.target.value)}
                     placeholder="e.g. Jane Smith"
-                    style={{ width: "100%", background: C.light, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 13px", fontSize: 12, color: C.dark, fontFamily: FB, outline: "none", boxSizing: "border-box" }} />
+                    style={{ width: "100%", background: C.light, border: `1px solid ${!approver.trim() ? "#FDDCB0" : C.border}`, borderRadius: 8, padding: "9px 13px", fontSize: 12, color: C.dark, fontFamily: FB, outline: "none", boxSizing: "border-box" }} />
+                  {!approver.trim() && (
+                    <p style={{ fontSize: 10, color: C.orange, margin: "4px 0 0", fontFamily: FB }}>Name is required</p>
+                  )}
                 </div>
 
                 {/* Decision — 3 options */}
@@ -654,13 +659,13 @@ export default function ApprovalPage() {
 
                 {/* Submit */}
                 <button onClick={handleSubmit}
-                  disabled={!decision || !comments.trim() || submitting}
+                  disabled={!decision || !comments.trim() || !approver.trim() || submitting}
                   style={{
                     width: "100%", padding: "13px 0", borderRadius: 12, border: "none",
                     fontFamily: FB, fontWeight: 700, fontSize: 13,
-                    cursor: (decision && comments.trim()) ? "pointer" : "not-allowed",
-                    background: (decision && comments.trim()) ? (decision === "renegotiate" ? C.dark : C.orange) : C.border,
-                    color:      (decision && comments.trim()) ? C.white : C.gray,
+                    cursor: (decision && comments.trim() && approver.trim()) ? "pointer" : "not-allowed",
+                    background: (decision && comments.trim() && approver.trim()) ? (decision === "renegotiate" ? C.dark : C.orange) : C.border,
+                    color:      (decision && comments.trim() && approver.trim()) ? C.white : C.gray,
                   }}>
                   {submitting ? "Submitting…" :
                    decision === "approved"       ? "Confirm Approval" :
