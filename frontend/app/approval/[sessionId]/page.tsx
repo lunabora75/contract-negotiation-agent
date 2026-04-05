@@ -287,7 +287,7 @@ export default function ApprovalPage() {
               ← Manager
             </button>
             <div style={{ width: 1, height: 16, background: C.border }} />
-            <img src="/mresult-logo.svg" alt="MResult" style={{ height: 34, width: "auto", display: "block" }} />
+            <img src="/mresult-logo.png" alt="MResult" style={{ height: 34, width: "auto", display: "block" }} />
             <span style={{ fontSize: 11, fontWeight: 600, background: C.dark, color: C.orange, border: `1px solid ${C.orange}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
               Contract Approval
             </span>

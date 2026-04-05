@@ -64,7 +64,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {/* MResult logo — transparent background, works directly on white header */}
-            <img src="/mresult-logo.svg" alt="MResult" style={{ height: 38, width: "auto", display: "block" }} />
+            <img src="/mresult-logo.png" alt="MResult" style={{ height: 38, width: "auto", display: "block" }} />
             <span style={{ background: C.dark, color: C.orange, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, fontFamily: FB, border: `1px solid ${C.orange}` }}>
               Contract Negotiation
             </span>

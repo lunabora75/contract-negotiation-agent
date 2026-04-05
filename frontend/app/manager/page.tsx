@@ -208,7 +208,7 @@ export default function ManagerPage() {
             <button onClick={() => router.push("/")} className="text-sm transition-opacity hover:opacity-70"
               style={{ color: C.orange, fontFamily: FONT_BODY }}>← Home</button>
             <div className="w-px h-4" style={{ background: C.border }} />
-            <img src="/mresult-logo.svg" alt="MResult" style={{ height: 34, width: "auto", display: "block" }} />
+            <img src="/mresult-logo.png" alt="MResult" style={{ height: 34, width: "auto", display: "block" }} />
             <span className="text-xs font-medium px-2.5 py-1 rounded-full"
               style={{ background: C.dark, color: C.orange, border: `1px solid ${C.orange}`, fontFamily: FONT_BODY }}>
               Category Manager
