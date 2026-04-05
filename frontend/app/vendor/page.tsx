@@ -275,9 +275,7 @@ export default function VendorPage() {
             <button onClick={() => router.push("/")} className="text-sm transition-opacity hover:opacity-70"
               style={{ color: C.orange, fontFamily: FONT_BODY }}>← Home</button>
             <div className="w-px h-4" style={{ background: C.border }} />
-            <div style={{ background: C.dark, borderRadius: 10, padding: "4px 10px", display: "inline-flex", alignItems: "center" }}>
-              <img src="/mresult-logo-dark.png" alt="MResult" style={{ height: 26, width: "auto", display: "block" }} />
-            </div>
+            <img src="/mresult-logo.svg" alt="MResult" style={{ height: 34, width: "auto", display: "block" }} />
             <span className="text-xs font-medium px-2.5 py-1 rounded-full"
               style={{ background: C.dark, color: C.orange, border: `1px solid ${C.orange}`, fontFamily: FONT_BODY }}>
               Vendor Portal

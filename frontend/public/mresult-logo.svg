@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 110" fill="none">
+  <!-- Left wing (left half-circle, rotated) -->
+  <path d="M 58 88 A 36 36 0 0 1 22 52 L 58 52 Z" fill="#111111"/>
+  <!-- Right wing (right half-circle, rotated) -->
+  <path d="M 72 88 A 36 36 0 0 0 108 52 L 72 52 Z" fill="#111111"/>
+  <!-- Centre wing top-left petal -->
+  <path d="M 65 52 A 28 28 0 0 0 37 24 L 37 52 Z" fill="#111111"/>
+  <!-- Centre wing top-right petal -->
+  <path d="M 65 52 A 28 28 0 0 1 93 24 L 93 52 Z" fill="#111111"/>
+  <!-- Orange circle -->
+  <circle cx="65" cy="22" r="22" fill="#F89738"/>
+  <!-- M letter (gray) -->
+  <text x="128" y="84" font-family="'Montserrat','Arial',sans-serif" font-size="72" font-weight="700" fill="#888888" letter-spacing="-2">M</text>
+  <!-- Result text (black) -->
+  <text x="188" y="84" font-family="'Montserrat','Arial',sans-serif" font-size="72" font-weight="700" fill="#111111" letter-spacing="-1">Result</text>
+  <!-- Registered trademark -->
+  <text x="402" y="28" font-family="'Arial',sans-serif" font-size="22" font-weight="400" fill="#111111">®</text>
+</svg>
