@@ -270,7 +270,7 @@ export default function VendorPage() {
 
       {/* ── Navbar ─────────────────────────────────────────────────────── */}
       <header style={{ background: C.white, flexShrink: 0, boxShadow: "0 1px 0 #DBDBDB" }}>
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-10 h-14 flex items-center justify-between">
           {/* LEFT: logo only */}
           <img src="/mresult-logo.png" alt="MResult" style={{ height: 32, width: "auto", display: "block" }} />
 
@@ -424,7 +424,7 @@ export default function VendorPage() {
         <>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-5xl mx-auto px-6 py-6 space-y-5">
+            <div className="max-w-7xl mx-auto px-10 py-6 space-y-5">
 
               {/* Opening context pill */}
               <div className="text-center">
@@ -458,7 +458,7 @@ export default function VendorPage() {
 
           {/* ── Input bar ──────────────────────────────────────────────── */}
           <div style={{ flexShrink: 0, background: C.white, borderTop: `1px solid ${C.border}` }}>
-            <div className="max-w-5xl mx-auto px-6 py-4">
+            <div className="max-w-7xl mx-auto px-10 py-4">
               {negotiationDone ? (
                 <p className="text-center text-sm py-2" style={{ color: C.gray }}>
                   This negotiation is complete. The Category Manager is reviewing the agreed terms.

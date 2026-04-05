@@ -280,7 +280,7 @@ export default function ApprovalPage() {
 
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
       <header style={{ background: C.white, position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 0 #DBDBDB" }}>
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 24px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 40px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           {/* LEFT: logo only */}
           <img src="/mresult-logo.png" alt="MResult" style={{ height: 30, width: "auto", display: "block" }} />
 
@@ -313,7 +313,7 @@ export default function ApprovalPage() {
       </header>
 
       {/* ── Main content wrapper ─────────────────────────────────────────── */}
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "28px 24px", width: "100%", boxSizing: "border-box", flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "28px 40px", width: "100%", boxSizing: "border-box", flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
 
         {/* ── Document info bar — full width ───────────────────────────── */}
         <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -716,9 +716,10 @@ export default function ApprovalPage() {
         </div>{/* end two-column row */}
 
         {/* Footer */}
-        <p style={{ textAlign: "center", fontSize: 11, color: C.border, fontFamily: FB, paddingBottom: 8 }}>
-          MResult Confidential · AI Powered Contract Negotiation
-        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 8, paddingTop: 4, borderTop: `1px solid ${C.border}` }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: C.dark, fontFamily: FB }}>MResult Confidential</span>
+          <span style={{ fontSize: 11, color: C.gray, fontFamily: FB }}>AI Powered Contract Negotiation</span>
+        </div>
 
       </div>
     </div>

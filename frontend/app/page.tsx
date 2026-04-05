@@ -45,7 +45,7 @@ export default function LandingPage() {
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header style={{ background: C.white, flexShrink: 0, boxShadow: "0 1px 0 #DBDBDB" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           {/* LEFT: logo only */}
           <img src="/mresult-logo.png" alt="MResult" style={{ height: 36, width: "auto", display: "block" }} />
 
@@ -234,7 +234,7 @@ export default function LandingPage() {
 
       {/* ── Footer ─────────────────────────────────────────────────────── */}
       <footer style={{ background: C.white, flexShrink: 0, borderTop: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", height: 38, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ padding: "0 40px", height: 38, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontFamily: FH, fontWeight: 700, fontSize: 12, color: C.dark }}>MResult Confidential</span>
           <span style={{ fontSize: 11, color: C.gray }}>AI Powered Contract Negotiation</span>
         </div>

@@ -203,7 +203,7 @@ export default function ManagerPage() {
 
       {/* ── Navbar ─────────────────────────────────────────────────────── */}
       <header style={{ background: C.white, boxShadow: "0 1px 0 #DBDBDB" }}>
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-10 h-14 flex items-center justify-between">
           {/* LEFT: logo only */}
           <img src="/mresult-logo.png" alt="MResult" style={{ height: 32, width: "auto", display: "block" }} />
 
@@ -232,7 +232,7 @@ export default function ManagerPage() {
         <div className="h-0.5" style={{ background: `linear-gradient(90deg, ${C.orange} 0%, ${C.dark} 100%)` }} />
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-10 py-8 space-y-8">
 
         {/* ── Contract Source Integration — compact horizontal layout ─── */}
         <section>
@@ -450,7 +450,7 @@ export default function ManagerPage() {
 
       {/* ── Footer ─────────────────────────────────────────────────────── */}
       <footer className="mt-12" style={{ background: C.white, borderTop: `1px solid ${C.border}` }}>
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-10 py-3 flex items-center justify-between">
           <span className="font-bold text-xs" style={{ color: C.dark, fontFamily: FONT_HEAD }}>MResult Confidential</span>
           <span className="text-xs" style={{ color: C.gray }}>AI Powered Contract Negotiation</span>
         </div>
