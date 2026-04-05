@@ -202,23 +202,32 @@ export default function ManagerPage() {
     <div style={{ minHeight: "100vh", background: C.light, fontFamily: FONT_BODY }}>
 
       {/* ── Navbar ─────────────────────────────────────────────────────── */}
-      <header style={{ background: C.white }}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <header style={{ background: C.white, boxShadow: "0 1px 0 #DBDBDB" }}>
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          {/* LEFT: logo only */}
+          <img src="/mresult-logo.png" alt="MResult" style={{ height: 32, width: "auto", display: "block" }} />
+
+          {/* RIGHT: nav + badge + profile */}
           <div className="flex items-center gap-3">
-            <button onClick={() => router.push("/")} className="text-sm transition-opacity hover:opacity-70"
-              style={{ color: C.orange, fontFamily: FONT_BODY }}>← Home</button>
+            <button onClick={() => router.push("/")}
+              className="text-xs transition-opacity hover:opacity-70"
+              style={{ color: C.gray, fontFamily: FONT_BODY }}>← Home</button>
             <div className="w-px h-4" style={{ background: C.border }} />
-            <img src="/mresult-logo.png" alt="MResult" style={{ height: 34, width: "auto", display: "block" }} />
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full"
-              style={{ background: C.dark, color: C.orange, border: `1px solid ${C.orange}`, fontFamily: FONT_BODY }}>
-              Category Manager
+            <span className="text-xs font-semibold px-3 py-1 rounded-full"
+              style={{ background: C.dark, color: C.orange, fontFamily: FONT_BODY }}>
+              Category Manager Portal
             </span>
+            <button onClick={loadSessions}
+              className="text-xs px-2.5 py-1 rounded-lg transition-opacity hover:opacity-70"
+              style={{ background: C.light, color: C.gray, fontFamily: FONT_BODY, border: `1px solid ${C.border}` }}>
+              ↻
+            </button>
+            {/* User profile avatar */}
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: C.orangeBg, border: `2px solid ${C.orangeBorder}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+              title="Category Manager">
+              <span style={{ fontSize: 10, fontWeight: 700, color: C.orange, fontFamily: FONT_BODY }}>CM</span>
+            </div>
           </div>
-          <button onClick={loadSessions}
-            className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
-            style={{ background: C.light, color: C.gray, fontFamily: FONT_BODY }}>
-            ↻ Refresh
-          </button>
         </div>
         <div className="h-0.5" style={{ background: `linear-gradient(90deg, ${C.orange} 0%, ${C.dark} 100%)` }} />
       </header>
@@ -441,8 +450,8 @@ export default function ManagerPage() {
 
       {/* ── Footer ─────────────────────────────────────────────────────── */}
       <footer className="mt-12" style={{ background: C.white, borderTop: `1px solid ${C.border}` }}>
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="font-bold text-sm" style={{ color: C.dark, fontFamily: FONT_HEAD }}>MResult</span>
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+          <span className="font-bold text-xs" style={{ color: C.dark, fontFamily: FONT_HEAD }}>MResult Confidential</span>
           <span className="text-xs" style={{ color: C.gray }}>AI Powered Contract Negotiation</span>
         </div>
       </footer>

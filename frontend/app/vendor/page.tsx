@@ -269,28 +269,38 @@ export default function VendorPage() {
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.light, fontFamily: FONT_BODY }}>
 
       {/* ── Navbar ─────────────────────────────────────────────────────── */}
-      <header style={{ background: C.white, flexShrink: 0 }}>
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+      <header style={{ background: C.white, flexShrink: 0, boxShadow: "0 1px 0 #DBDBDB" }}>
+        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+          {/* LEFT: logo only */}
+          <img src="/mresult-logo.png" alt="MResult" style={{ height: 32, width: "auto", display: "block" }} />
+
+          {/* RIGHT: nav + session indicator + badge + profile */}
           <div className="flex items-center gap-3">
-            <button onClick={() => router.push("/")} className="text-sm transition-opacity hover:opacity-70"
-              style={{ color: C.orange, fontFamily: FONT_BODY }}>← Home</button>
+            {activeSession && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs truncate max-w-[160px]" style={{ color: C.gray, fontFamily: FONT_BODY }}>
+                  📄 {activeSession.filename}
+                </span>
+                {!negotiationDone && (
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: C.orange }} />
+                )}
+                <div className="w-px h-4" style={{ background: C.border }} />
+              </div>
+            )}
+            <button onClick={() => router.push("/")}
+              className="text-xs transition-opacity hover:opacity-70"
+              style={{ color: C.gray, fontFamily: FONT_BODY }}>← Home</button>
             <div className="w-px h-4" style={{ background: C.border }} />
-            <img src="/mresult-logo.png" alt="MResult" style={{ height: 34, width: "auto", display: "block" }} />
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full"
-              style={{ background: C.dark, color: C.orange, border: `1px solid ${C.orange}`, fontFamily: FONT_BODY }}>
+            <span className="text-xs font-semibold px-3 py-1 rounded-full"
+              style={{ background: C.dark, color: C.orange, fontFamily: FONT_BODY }}>
               Vendor Portal
             </span>
-          </div>
-          {activeSession && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs truncate max-w-[180px]" style={{ color: C.gray }}>
-                📄 {activeSession.filename}
-              </span>
-              {!negotiationDone && (
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: C.orange }} />
-              )}
+            {/* User profile avatar */}
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#F0F6FF", border: "2px solid #C3D9F5", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+              title="Vendor">
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#4A90D9", fontFamily: FONT_BODY }}>V</span>
             </div>
-          )}
+          </div>
         </div>
         <div className="h-0.5" style={{ background: `linear-gradient(90deg, ${C.orange} 0%, ${C.dark} 100%)` }} />
       </header>
@@ -486,7 +496,7 @@ export default function VendorPage() {
                 </div>
               )}
               <p className="text-[10px] text-center mt-2" style={{ color: C.border }}>
-                AI Powered Contract Negotiation · All negotiations are recorded for audit purposes
+                MResult Confidential · AI Powered Contract Negotiation
               </p>
             </div>
           </div>

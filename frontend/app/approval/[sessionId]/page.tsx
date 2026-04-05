@@ -279,27 +279,35 @@ export default function ApprovalPage() {
     <div style={{ minHeight: "100vh", background: C.light, fontFamily: FB, display: "flex", flexDirection: "column" }}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
-      <header style={{ background: C.white, position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <header style={{ background: C.white, position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 0 #DBDBDB" }}>
+        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 24px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* LEFT: logo only */}
+          <img src="/mresult-logo.png" alt="MResult" style={{ height: 30, width: "auto", display: "block" }} />
+
+          {/* RIGHT: nav + badge + status + profile */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button onClick={() => router.push("/manager")}
-              style={{ fontSize: 13, color: C.orange, background: "none", border: "none", cursor: "pointer", fontFamily: FB }}>
+              style={{ fontSize: 12, color: C.gray, background: "none", border: "none", cursor: "pointer", fontFamily: FB }}>
               ← Manager
             </button>
             <div style={{ width: 1, height: 16, background: C.border }} />
-            <img src="/mresult-logo.png" alt="MResult" style={{ height: 34, width: "auto", display: "block" }} />
-            <span style={{ fontSize: 11, fontWeight: 600, background: C.dark, color: C.orange, border: `1px solid ${C.orange}`, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
+            <span style={{ fontSize: 11, fontWeight: 600, background: C.dark, color: C.orange, borderRadius: 20, padding: "3px 10px", fontFamily: FB }}>
               Contract Approval
             </span>
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, fontFamily: FB,
+              background: existingApproval ? (existingApproval.decision === "approved" ? C.orangeBg : C.light) : C.light,
+              color: existingApproval ? (existingApproval.decision === "approved" ? C.orange : C.gray) : C.gray,
+              border: `1px solid ${existingApproval ? (existingApproval.decision === "approved" ? C.orangeBorder : C.border) : C.border}`,
+            }}>
+              {existingApproval ? existingApproval.decision.toUpperCase() : "PENDING APPROVAL"}
+            </span>
+            {/* User profile avatar */}
+            <div style={{ width: 30, height: 30, borderRadius: "50%", background: C.orangeBg, border: `2px solid ${C.orangeBorder}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+              title="Category Manager">
+              <span style={{ fontSize: 10, fontWeight: 700, color: C.orange, fontFamily: FB }}>CM</span>
+            </div>
           </div>
-          <span style={{
-            fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 20, fontFamily: FB,
-            background: existingApproval ? (existingApproval.decision === "approved" ? C.orangeBg : C.light) : C.light,
-            color: existingApproval ? (existingApproval.decision === "approved" ? C.orange : C.gray) : C.gray,
-            border: `1px solid ${existingApproval ? (existingApproval.decision === "approved" ? C.orangeBorder : C.border) : C.border}`,
-          }}>
-            {existingApproval ? existingApproval.decision.toUpperCase() : "PENDING APPROVAL"}
-          </span>
         </div>
         <div style={{ height: 2, background: `linear-gradient(90deg, ${C.orange} 0%, ${C.dark} 100%)` }} />
       </header>
@@ -709,7 +717,7 @@ export default function ApprovalPage() {
 
         {/* Footer */}
         <p style={{ textAlign: "center", fontSize: 11, color: C.border, fontFamily: FB, paddingBottom: 8 }}>
-          AI Powered Contract Negotiation · MResult
+          MResult Confidential · AI Powered Contract Negotiation
         </p>
 
       </div>
