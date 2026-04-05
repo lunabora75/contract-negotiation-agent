@@ -31,6 +31,7 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string; bo
   negotiation_in_progress:{ label: "Negotiation in Progress",     color: "#D97706", bg: "#FFFBEB",   border: "#FDE68A", dot: true },
   pending_approval:       { label: "Pending Approval",            color: C.white,   bg: C.dark,      border: C.dark },
   re_negotiate:           { label: "Re-negotiate",                color: "#4F46E5", bg: "#EEF2FF",   border: "#C7D2FE" },
+  sent_for_renegotiation: { label: "Sent for Re-negotiation",     color: "#4F46E5", bg: "#EEF2FF",   border: "#C7D2FE" },
   pending_offline_review: { label: "Pending Offline Review",      color: "#D97706", bg: "#FFFBEB",   border: "#FDE68A" },
   approved:               { label: "Approved",                    color: "#16A34A", bg: "#F0FDF4",   border: "#BBF7D0" },
   rejected:               { label: "Rejected",                    color: "#DC2626", bg: "#FFF4F4",   border: "#FECACA" },
@@ -142,10 +143,6 @@ export default function ManagerPage() {
   // ── Filtered sessions ────────────────────────────────────────────────────
   const filtered = filter === "all" ? sessions : sessions.filter(s => s.status === filter);
 
-  const pendingApprovals = sessions.filter(s =>
-    ["pending_approval", "re_negotiate", "pending_offline_review"].includes(s.status)
-  );
-
   const statusCounts = sessions.reduce<Record<string, number>>((acc, s) => {
     acc[s.status] = (acc[s.status] || 0) + 1;
     return acc;
@@ -178,12 +175,24 @@ export default function ManagerPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
 
-        {/* ── Upload section ────────────────────────────────────────────── */}
+        {/* ── Contract Source Integration section ──────────────────────── */}
         <section>
-          <h2 className="font-bold text-lg mb-4" style={{ color: C.dark, fontFamily: FONT_HEAD }}>
-            Contract Upload
+          <h2 className="font-bold text-lg mb-1" style={{ color: C.dark, fontFamily: FONT_HEAD }}>
+            Contract Source Integration
           </h2>
-          <div className="rounded-2xl p-6" style={{ background: C.white, border: `1px solid ${C.border}` }}>
+          <p className="text-xs mb-4" style={{ color: C.gray, fontFamily: FONT_BODY }}>
+            Ingest contracts from multiple sources. Click a connector to upload or connect.
+          </p>
+
+          {/* Active connector: File Upload */}
+          <div className="rounded-2xl p-5 mb-4" style={{ background: C.white, border: `2px solid ${C.orange}` }}>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-lg">📁</span>
+              <span className="font-bold text-sm" style={{ color: C.dark, fontFamily: FONT_HEAD }}>File Upload</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full ml-1"
+                style={{ background: C.orangeBg, color: C.orange, border: `1px solid ${C.orangeBorder}` }}>Active</span>
+            </div>
+            {/* --- existing drag-drop upload UI goes here, unchanged --- */}
             <div
               onDragOver={e => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
@@ -214,86 +223,46 @@ export default function ManagerPage() {
                 </div>
               )}
             </div>
-
             {uploadError && (
               <p className="text-xs mt-3 px-3 py-2 rounded-lg" style={{ background: "#FFF4F4", color: "#DC2626", border: "1px solid #FECACA" }}>
                 ⚠️ {uploadError}
               </p>
             )}
-
-            <div className="mt-4 flex items-center gap-3">
-              <button
-                onClick={upload}
-                disabled={!file || uploading}
-                className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all"
-                style={{
-                  background: file ? C.dark : C.border,
-                  color:      file ? C.white : C.gray,
-                  cursor:     file ? "pointer" : "not-allowed",
-                  fontFamily: FONT_BODY,
-                }}>
+            <div className="mt-4">
+              <button onClick={upload} disabled={!file || uploading}
+                className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                style={{ background: file ? C.dark : C.border, color: file ? C.white : C.gray, cursor: file ? "pointer" : "not-allowed", fontFamily: FONT_BODY }}>
                 {uploading ? "Uploading…" : "Upload Contract"}
               </button>
             </div>
           </div>
-        </section>
 
-        {/* ── Pending Approvals (prominent section) ────────────────────── */}
-        {pendingApprovals.length > 0 && (
-          <section>
-            <div className="flex items-center gap-3 mb-4">
-              <h2 className="font-bold text-lg" style={{ color: C.dark, fontFamily: FONT_HEAD }}>Pending Approvals</h2>
-              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white animate-pulse"
-                style={{ background: C.dark }}>{pendingApprovals.length}</span>
-            </div>
-            <div className="space-y-3">
-              {pendingApprovals.map(s => (
-                <div key={s.session_id} className="rounded-xl p-5 flex items-center justify-between gap-4"
-                  style={{
-                    background: C.white,
-                    border: `2px solid ${s.status === "re_negotiate" ? "#6366F1" : C.dark}`,
-                    boxShadow: "0 2px 12px rgba(0,0,0,0.08)"
-                  }}>
-                  <div className="flex items-center gap-4 min-w-0">
-                    <span className="text-2xl shrink-0">
-                      {s.status === "re_negotiate" ? "↩" : s.status === "pending_offline_review" ? "🔎" : "📋"}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm truncate" style={{ color: C.dark }}>{s.filename}</p>
-                      <p className="text-xs mt-0.5" style={{ color: C.gray }}>
-                        {s.status === "re_negotiate"
-                          ? "Returned for re-negotiation · "
-                          : s.status === "pending_offline_review"
-                          ? "Pending offline review · "
-                          : "Negotiation completed · "}
-                        {fmtDate(s.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <StatusBadge status={s.status} />
-                    {s.status === "re_negotiate" ? (
-                      <button
-                        onClick={() => trigger(s.session_id)}
-                        disabled={triggeringId === s.session_id}
-                        className="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap"
-                        style={{ background: C.dark, color: C.white, fontFamily: FONT_BODY, opacity: triggeringId === s.session_id ? 0.6 : 1 }}>
-                        {triggeringId === s.session_id ? "Sending…" : "Send to AI Agent for Re-negotiation →"}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => router.push(`/approval/${s.session_id}`)}
-                        className="px-4 py-2 rounded-lg font-semibold text-sm transition-all"
-                        style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY }}>
-                        Review & Approve →
-                      </button>
-                    )}
-                  </div>
+          {/* Placeholder connectors grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { icon: "🔷", name: "SAP Ariba",    desc: "ERP procurement" },
+              { icon: "🟠", name: "ORO Labs",     desc: "Procurement platform" },
+              { icon: "📂", name: "SharePoint",   desc: "Microsoft 365" },
+              { icon: "💾", name: "OneDrive",     desc: "File storage" },
+              { icon: "🟢", name: "Google Drive", desc: "Cloud storage" },
+              { icon: "☁️", name: "AWS S3",       desc: "Object storage" },
+            ].map(c => (
+              <div key={c.name}
+                className="rounded-xl p-4 flex flex-col items-center text-center gap-2 cursor-not-allowed select-none"
+                style={{ background: C.white, border: `1px solid ${C.border}`, opacity: 0.55 }}>
+                <span className="text-2xl">{c.icon}</span>
+                <div>
+                  <p className="font-semibold text-xs" style={{ color: C.dark, fontFamily: FONT_HEAD }}>{c.name}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: C.gray, fontFamily: FONT_BODY }}>{c.desc}</p>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: C.light, color: C.gray, border: `1px solid ${C.border}`, fontFamily: FONT_BODY }}>
+                  Coming Soon
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* ── All Contracts table ───────────────────────────────────────── */}
         <section>
@@ -307,9 +276,9 @@ export default function ManagerPage() {
                 ["uploaded",               `Uploaded (${statusCounts.uploaded || 0})`],
                 ["sent_for_negotiation",   `Sent (${statusCounts.sent_for_negotiation || 0})`],
                 ["negotiation_in_progress",`In Progress (${statusCounts.negotiation_in_progress || 0})`],
-                ["pending_approval",       `Pending Approval (${statusCounts.pending_approval || 0})`],
-                ["re_negotiate",           `Re-negotiate (${statusCounts.re_negotiate || 0})`],
-                ["pending_offline_review", `Offline Review (${statusCounts.pending_offline_review || 0})`],
+                ["pending_approval",         `Pending Approval (${statusCounts.pending_approval || 0})`],
+                ["sent_for_renegotiation",  `Re-negotiating (${statusCounts.sent_for_renegotiation || 0})`],
+                ["pending_offline_review",  `Offline Review (${statusCounts.pending_offline_review || 0})`],
                 ["approved",               `Approved (${statusCounts.approved || 0})`],
                 ["rejected",               `Rejected (${statusCounts.rejected || 0})`],
               ].map(([val, label]) => (
@@ -378,40 +347,30 @@ export default function ManagerPage() {
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
                           {s.status === "uploaded" && (
-                            <button
-                              onClick={() => trigger(s.session_id)}
-                              disabled={triggeringId === s.session_id}
+                            <button onClick={() => trigger(s.session_id)} disabled={triggeringId === s.session_id}
                               className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
                               style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY, opacity: triggeringId === s.session_id ? 0.6 : 1 }}>
                               {triggeringId === s.session_id ? "Sending…" : "Send to AI Agent for Negotiation →"}
                             </button>
                           )}
-                          {s.status === "re_negotiate" && (
-                            <button
-                              onClick={() => trigger(s.session_id)}
-                              disabled={triggeringId === s.session_id}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap"
-                              style={{ background: C.dark, color: C.white, fontFamily: FONT_BODY, opacity: triggeringId === s.session_id ? 0.6 : 1 }}>
-                              {triggeringId === s.session_id ? "Sending…" : "Send to AI Agent for Re-negotiation →"}
-                            </button>
-                          )}
                           {s.status === "sent_for_negotiation" && (
                             <span className="text-xs" style={{ color: C.gray }}>Awaiting vendor…</span>
+                          )}
+                          {s.status === "sent_for_renegotiation" && (
+                            <span className="text-xs font-semibold" style={{ color: "#4F46E5" }}>Awaiting Vendor…</span>
                           )}
                           {s.status === "negotiation_in_progress" && (
                             <span className="text-xs" style={{ color: "#D97706" }}>Negotiation active</span>
                           )}
                           {(s.status === "pending_approval" || s.status === "pending_offline_review") && (
-                            <button
-                              onClick={() => router.push(`/approval/${s.session_id}`)}
+                            <button onClick={() => router.push(`/approval/${s.session_id}`)}
                               className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                              style={{ background: C.dark, color: C.white, fontFamily: FONT_BODY }}>
-                              Review & Approve →
+                              style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY }}>
+                              {s.status === "pending_offline_review" ? "Add Offline Notes →" : "Review & Approve →"}
                             </button>
                           )}
                           {(s.status === "approved" || s.status === "rejected") && (
-                            <button
-                              onClick={() => router.push(`/approval/${s.session_id}`)}
+                            <button onClick={() => router.push(`/approval/${s.session_id}`)}
                               className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                               style={{ background: C.light, color: C.gray, border: `1px solid ${C.border}`, fontFamily: FONT_BODY }}>
                               View Transcript

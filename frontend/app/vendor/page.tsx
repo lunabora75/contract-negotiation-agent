@@ -173,6 +173,8 @@ export default function VendorPage() {
 
   // Session selection
   const [availableSessions, setAvailableSessions] = useState<ActiveSession[]>([]);
+  const [newNegSessions,    setNewNegSessions]    = useState<ActiveSession[]>([]);
+  const [reNegSessions,     setReNegSessions]     = useState<ActiveSession[]>([]);
   const [loadingList,        setLoadingList]        = useState(true);
   const [activeSession,      setActiveSession]      = useState<ActiveSession | null>(null);
   const [connectingId,       setConnectingId]       = useState<string | null>(null);
@@ -191,10 +193,15 @@ export default function VendorPage() {
     try {
       const res  = await fetch(`${API}/api/sessions`);
       const data: ActiveSession[] = await res.json();
-      const active = data.filter(s =>
+      const newNegotiations = data.filter(s =>
         s.status === "sent_for_negotiation" || s.status === "negotiation_in_progress"
       );
-      setAvailableSessions(active);
+      const reNegotiations = data.filter(s =>
+        s.status === "sent_for_renegotiation"
+      );
+      setAvailableSessions([...newNegotiations, ...reNegotiations]);
+      setNewNegSessions(newNegotiations);
+      setReNegSessions(reNegotiations);
     } catch { /* ignore */ }
     setLoadingList(false);
   }, []);
@@ -315,37 +322,87 @@ export default function VendorPage() {
                 </button>
               </div>
             ) : (
-              <div>
-                <h2 className="font-bold text-xl mb-1 text-center" style={{ color: C.dark, fontFamily: FONT_HEAD }}>
-                  Active Negotiation{availableSessions.length > 1 ? "s" : ""}
-                </h2>
-                <p className="text-sm text-center mb-6" style={{ color: C.gray }}>
-                  Select a contract to begin or continue negotiation
-                </p>
-                <div className="space-y-3">
-                  {availableSessions.map(s => (
-                    <div key={s.session_id}
-                      className="rounded-xl p-5 flex items-center justify-between gap-4"
-                      style={{ background: C.white, border: `1px solid ${C.border}` }}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">📄</span>
-                        <div>
-                          <p className="font-semibold text-sm" style={{ color: C.dark }}>{s.filename}</p>
-                          <p className="text-xs mt-0.5" style={{ color: C.gray }}>
-                            {s.status === "negotiation_in_progress" ? "Negotiation in progress" : "Ready to start"}
-                          </p>
+              <div className="space-y-6">
+
+                {/* Section 1: Ready for Negotiation */}
+                {newNegSessions.length > 0 && (
+                  <div>
+                    <h2 className="font-bold text-lg mb-1" style={{ color: C.dark, fontFamily: FONT_HEAD }}>
+                      Ready for Negotiation
+                    </h2>
+                    <p className="text-sm mb-4" style={{ color: C.gray }}>
+                      Select a contract to begin or continue negotiation
+                    </p>
+                    <div className="space-y-3">
+                      {newNegSessions.map(s => (
+                        <div key={s.session_id}
+                          className="rounded-xl overflow-hidden flex items-center justify-between gap-4"
+                          style={{ background: C.white, border: `2px solid ${C.orange}` }}>
+                          <div className="w-1 self-stretch shrink-0" style={{ background: C.orange }} />
+                          <div className="flex items-center gap-3 flex-1 py-5 pr-2">
+                            <span className="text-2xl">📄</span>
+                            <div>
+                              <p className="font-semibold text-sm" style={{ color: C.dark }}>{s.filename}</p>
+                              <p className="text-xs mt-0.5" style={{ color: C.gray }}>
+                                {s.status === "negotiation_in_progress" ? "Negotiation in progress" : "Ready to start"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="py-5 pr-5">
+                            <button
+                              onClick={() => connectToSession(s)}
+                              disabled={connectingId !== null}
+                              className="px-4 py-2 rounded-lg font-semibold text-sm shrink-0"
+                              style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY, opacity: connectingId === s.session_id ? 0.6 : 1 }}>
+                              {connectingId === s.session_id ? "Connecting…" : "Start Negotiation →"}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      <button
-                        onClick={() => connectToSession(s)}
-                        disabled={connectingId !== null}
-                        className="px-4 py-2 rounded-lg font-semibold text-sm shrink-0"
-                        style={{ background: C.orange, color: C.white, fontFamily: FONT_BODY, opacity: connectingId === s.session_id ? 0.6 : 1 }}>
-                        {connectingId === s.session_id ? "Connecting…" : s.status === "negotiation_in_progress" ? "Resume →" : "Start →"}
-                      </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {/* Section 2: Pending Re-negotiation */}
+                {reNegSessions.length > 0 && (
+                  <div>
+                    <h2 className="font-bold text-lg mb-1" style={{ color: C.dark, fontFamily: FONT_HEAD }}>
+                      Pending Re-negotiation
+                    </h2>
+                    <p className="text-sm mb-4" style={{ color: C.gray }}>
+                      Contracts returned for re-negotiation by the Category Manager
+                    </p>
+                    <div className="space-y-3">
+                      {reNegSessions.map(s => (
+                        <div key={s.session_id}
+                          className="rounded-xl overflow-hidden flex items-center justify-between gap-4"
+                          style={{ background: C.white, border: "2px solid #6366F1" }}>
+                          <div className="w-1 self-stretch shrink-0" style={{ background: "#6366F1" }} />
+                          <div className="flex items-center gap-3 flex-1 py-5 pr-2">
+                            <span className="text-2xl">📄</span>
+                            <div>
+                              <p className="font-semibold text-sm" style={{ color: C.dark }}>{s.filename}</p>
+                              <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1"
+                                style={{ background: "#EEF2FF", color: "#4F46E5", border: "1px solid #C7D2FE" }}>
+                                Re-negotiation Requested by Category Manager
+                              </span>
+                            </div>
+                          </div>
+                          <div className="py-5 pr-5">
+                            <button
+                              onClick={() => connectToSession(s)}
+                              disabled={connectingId !== null}
+                              className="px-4 py-2 rounded-lg font-semibold text-sm shrink-0"
+                              style={{ background: "#4F46E5", color: C.white, fontFamily: FONT_BODY, opacity: connectingId === s.session_id ? 0.6 : 1 }}>
+                              {connectingId === s.session_id ? "Connecting…" : "Resume Re-negotiation →"}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               </div>
             )}
           </div>

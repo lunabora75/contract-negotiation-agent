@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Claude">
   <diagram id="exec_overview" name="Executive Overview">
-    <mxGraphModel dx="1460" dy="806" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1050" math="0" shadow="1">
+    <mxGraphModel dx="1703" dy="940" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1050" math="0" shadow="1">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -22,19 +22,19 @@
         <mxCell id="header_sub" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=14;fontStyle=2;fontColor=#F89738;" value="Solution Overview" vertex="1">
           <mxGeometry height="40" width="200" x="1350" y="25" as="geometry" />
         </mxCell>
-        <mxCell id="challenge_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=10;fontStyle=1;fontColor=#8B8B8B;letterSpacing=3;" value="THE CHALLENGE" vertex="1">
-          <mxGeometry height="20" width="250" x="50" y="115" as="geometry" />
+        <mxCell id="challenge_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=17;fontStyle=1;fontColor=#8B8B8B;letterSpacing=3;" value="THE CHALLENGE" vertex="1">
+          <mxGeometry height="20" width="250" x="50" y="112" as="geometry" />
         </mxCell>
-        <mxCell id="challenge_box" parent="1" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#DBDBDB;strokeWidth=1.5;fontSize=12;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;b&gt;Manual SOW negotiation is slow,&lt;/b&gt;&lt;br&gt;inconsistent and leaves money on&lt;br&gt;the table. Rate variances vs. market&lt;br&gt;benchmarks go undetected." vertex="1">
+        <mxCell id="challenge_box" parent="1" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#DBDBDB;strokeWidth=1.5;fontSize=15;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;b&gt;Manual SOW negotiation is slow,&lt;/b&gt;&lt;br&gt;inconsistent and leaves money on&lt;br&gt;the table. Rate variances vs. market&lt;br&gt;benchmarks go undetected." vertex="1">
           <mxGeometry height="110" width="260" x="50" y="140" as="geometry" />
         </mxCell>
-        <mxCell id="solution_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=10;fontStyle=1;fontColor=#F89738;letterSpacing=3;" value="THE SOLUTION" vertex="1">
-          <mxGeometry height="20" width="900" x="350" y="115" as="geometry" />
+        <mxCell id="solution_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#F89738;letterSpacing=3;" value="THE SOLUTION" vertex="1">
+          <mxGeometry height="20" width="188" x="715" y="112" as="geometry" />
         </mxCell>
-        <mxCell id="step1_box" parent="1" style="rounded=14;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#09131b;strokeWidth=2.5;fontSize=12;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;b style=&#39;font-size:14px&#39;&gt;📁  Upload Contract&lt;/b&gt;&lt;br&gt;&lt;br&gt;Category Manager uploads a&lt;br&gt;Statement of Work (SOW) and&lt;br&gt;&lt;b&gt;sends it to the AI Agent&lt;/b&gt;&lt;br&gt;for negotiation with one click." vertex="1">
+        <mxCell id="step1_box" parent="1" style="rounded=14;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#09131b;strokeWidth=2.5;fontSize=14;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;b&gt;📁  &lt;font style=&quot;font-size: 17px;&quot;&gt;Upload Contract&lt;/font&gt;&lt;/b&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;br&gt;Category Manager uploads a&lt;br&gt;Statement of Work (SOW) and&lt;br&gt;&lt;b&gt;sends it to the AI Agent&lt;/b&gt;&lt;br&gt;for negotiation with one click." vertex="1">
           <mxGeometry height="155" width="240" x="350" y="140" as="geometry" />
         </mxCell>
-        <mxCell id="step1_persona" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#09131b;" value="👤 Category Manager" vertex="1">
+        <mxCell id="step1_persona" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#09131b;" value="👤 Category Manager" vertex="1">
           <mxGeometry height="24" width="240" x="350" y="302" as="geometry" />
         </mxCell>
         <mxCell id="arr1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#F89738;strokeWidth=3;exitX=1;exitY=0.5;entryX=0;entryY=0.5;endArrow=block;endFill=1;endSize=10;" value="">
@@ -46,17 +46,14 @@
         <mxCell id="agent_hero_bg" parent="1" style="rounded=16;whiteSpace=wrap;html=1;fillColor=#09131b;strokeColor=#F89738;strokeWidth=3;" value="" vertex="1">
           <mxGeometry height="185" width="360" x="620" y="140" as="geometry" />
         </mxCell>
-        <mxCell id="agent_hero_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fontColor=#F89738;" value="🤖  AI Negotiation Agent" vertex="1">
+        <mxCell id="agent_hero_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fontColor=#F89738;" value="&lt;font style=&quot;font-size: 17px;&quot;&gt;🤖  AI Negotiation Agent&lt;/font&gt;" vertex="1">
           <mxGeometry height="30" width="340" x="630" y="152" as="geometry" />
         </mxCell>
         <mxCell id="agent_hero_divider" parent="1" style="line;strokeColor=#F89738;fillColor=none;opacity=50;" value="" vertex="1">
           <mxGeometry height="10" width="300" x="650" y="186" as="geometry" />
         </mxCell>
-        <mxCell id="agent_hero_pts" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=11;fontColor=#FFFFFF;spacingLeft=10;" value="✦  Reads &amp; extracts roles and rates from SOW&#xa;✦  Benchmarks every rate against internal data&#xa;✦  Opens negotiation with vendor automatically&#xa;✦  Makes counter-offers backed by benchmark&#xa;✦  Agrees best possible terms within limits&#xa;✦  Learns from every Category Manager decision" vertex="1">
+        <mxCell id="agent_hero_pts" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=14;fontColor=#FFFFFF;spacingLeft=10;" value="✦  Reads &amp;amp; extracts roles and rates from SOW&#xa;✦  Benchmarks every rate against internal data&#xa;✦  Opens negotiation with vendor automatically&#xa;✦  Makes counter-offers backed by benchmark&#xa;✦  Agrees best possible terms within limits&#xa;✦  Learns from every Category Manager decision" vertex="1">
           <mxGeometry height="122" width="330" x="640" y="196" as="geometry" />
-        </mxCell>
-        <mxCell id="agent_hero_sub" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=10;fontStyle=2;fontColor=#F89738;" value="Powered by Claude Sonnet (Anthropic)" vertex="1">
-          <mxGeometry height="22" width="340" x="630" y="328" as="geometry" />
         </mxCell>
         <mxCell id="arr2" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#F89738;strokeWidth=3;exitX=1;exitY=0.5;entryX=0;entryY=0.5;endArrow=block;endFill=1;endSize=10;" value="">
           <mxGeometry height="10" width="50" x="980" y="217" as="geometry">
@@ -64,28 +61,28 @@
             <mxPoint x="1030" y="217" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="step3_box" parent="1" style="rounded=14;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F89738;strokeWidth=2.5;fontSize=12;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;b style=&#39;font-size:14px&#39;&gt;💬  Negotiate&lt;/b&gt;&lt;br&gt;&lt;br&gt;Vendor receives AI&#39;s opening&lt;br&gt;offer with benchmark evidence.&lt;br&gt;&lt;b&gt;Negotiates in real-time chat&lt;/b&gt;&lt;br&gt;until terms are agreed." vertex="1">
+        <mxCell id="step3_box" parent="1" style="rounded=14;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F89738;strokeWidth=2.5;fontSize=14;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b style=&quot;&quot;&gt;💬  Negotiate&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;br&gt;Vendor receives AI&#39;s opening&lt;br&gt;offer with benchmark evidence.&lt;br&gt;&lt;b&gt;Negotiates in real-time chat&lt;/b&gt;&lt;br&gt;until terms are agreed." vertex="1">
           <mxGeometry height="155" width="240" x="1000" y="140" as="geometry" />
         </mxCell>
-        <mxCell id="step3_persona" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#F89738;" value="👤 Vendor / Supplier" vertex="1">
-          <mxGeometry height="24" width="240" x="1000" y="302" as="geometry" />
+        <mxCell id="step3_persona" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#F89738;" value="👤 Vendor / Supplier" vertex="1">
+          <mxGeometry height="24" width="188" x="1136" y="302" as="geometry" />
         </mxCell>
         <mxCell id="arr3" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#09131b;strokeWidth=3;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=block;endFill=1;endSize=10;" value="">
           <mxGeometry height="50" width="10" x="1120" y="295" as="geometry">
-            <mxPoint x="1120" y="295" as="sourcePoint" />
-            <mxPoint x="1120" y="345" as="targetPoint" />
+            <mxPoint x="1124" y="298" as="sourcePoint" />
+            <mxPoint x="1124" y="348" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="step4_box" parent="1" style="rounded=14;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#09131b;strokeWidth=2.5;fontSize=12;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;b style=&#39;font-size:14px&#39;&gt;✅  Review &amp; Decide&lt;/b&gt;&lt;br&gt;&lt;br&gt;Category Manager reviews the&lt;br&gt;negotiated terms with full AI&lt;br&gt;explainability and benchmark&lt;br&gt;confidence scores, then decides." vertex="1">
+        <mxCell id="step4_box" parent="1" style="rounded=14;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#09131b;strokeWidth=2.5;fontSize=14;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b style=&quot;&quot;&gt;✅  Review &amp;amp; Decide&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;br&gt;Category Manager reviews the&lt;br&gt;negotiated terms with full AI&lt;br&gt;explainability and benchmark&lt;br&gt;confidence scores, then decides." vertex="1">
           <mxGeometry height="155" width="240" x="1000" y="365" as="geometry" />
         </mxCell>
-        <mxCell id="dec_approve" parent="1" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#16A34A;strokeWidth=2;fontSize=11;fontColor=#16A34A;fontStyle=1;" value="✓  Approve Terms" vertex="1">
+        <mxCell id="dec_approve" parent="1" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#16A34A;strokeWidth=2;fontSize=15;fontColor=#16A34A;fontStyle=1;" value="✓  Approve Terms" vertex="1">
           <mxGeometry height="36" width="175" x="1270" y="378" as="geometry" />
         </mxCell>
-        <mxCell id="dec_renegotiate" parent="1" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#4F46E5;strokeWidth=2;fontSize=11;fontColor=#4F46E5;fontStyle=1;" value="↩  Re-negotiate" vertex="1">
+        <mxCell id="dec_renegotiate" parent="1" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#4F46E5;strokeWidth=2;fontSize=15;fontColor=#4F46E5;fontStyle=1;" value="↩  Re-negotiate" vertex="1">
           <mxGeometry height="36" width="175" x="1270" y="430" as="geometry" />
         </mxCell>
-        <mxCell id="dec_offline" parent="1" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#D97706;strokeWidth=2;fontSize=11;fontColor=#D97706;fontStyle=1;" value="🔎  Offline Review" vertex="1">
+        <mxCell id="dec_offline" parent="1" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#D97706;strokeWidth=2;fontSize=15;fontColor=#D97706;fontStyle=1;" value="🔎  Offline Review" vertex="1">
           <mxGeometry height="36" width="175" x="1270" y="482" as="geometry" />
         </mxCell>
         <mxCell id="arr_d1" edge="1" parent="1" source="step4_box" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#16A34A;strokeWidth=1.5;exitX=1;exitY=0.3;entryX=0;entryY=0.5;" target="dec_approve" value="">
@@ -97,37 +94,19 @@
         <mxCell id="arr_d3" edge="1" parent="1" source="step4_box" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D97706;strokeWidth=1.5;exitX=1;exitY=0.7;entryX=0;entryY=0.5;" target="dec_offline" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="arr_renegloop" edge="1" parent="1" source="dec_renegotiate" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#4F46E5;strokeWidth=1.5;dashed=1;fontSize=9;fontColor=#4F46E5;exitX=0;exitY=0.5;entryX=0.5;entryY=1;endArrow=block;endFill=1;endSize=8;" target="agent_hero_bg" value="Agent re-opens with&#xa;vendor using CM reason">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="580" y="448" />
-              <mxPoint x="800" y="448" />
-              <mxPoint x="800" y="325" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
         <mxCell id="arr4" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#09131b;strokeWidth=3;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=block;endFill=1;endSize=10;" value="">
           <mxGeometry height="50" width="10" x="1120" y="520" as="geometry">
             <mxPoint x="1120" y="520" as="sourcePoint" />
             <mxPoint x="1120" y="570" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="step5_box" parent="1" style="rounded=14;whiteSpace=wrap;html=1;fillColor=#FFF8F0;strokeColor=#F89738;strokeWidth=2.5;fontSize=12;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;b style=&#39;font-size:14px&#39;&gt;🎓  Agent Self-Learns&lt;/b&gt;&lt;br&gt;&lt;br&gt;Every CM decision and comment&lt;br&gt;is stored as feedback. The AI&lt;br&gt;&lt;b&gt;improves its strategy&lt;/b&gt; for the&lt;br&gt;next negotiation automatically." vertex="1">
+        <mxCell id="step5_box" parent="1" style="rounded=14;whiteSpace=wrap;html=1;fillColor=#FFF8F0;strokeColor=#F89738;strokeWidth=2.5;fontSize=14;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b style=&quot;&quot;&gt;🎓  Agent Self-Learns&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;br&gt;Every CM decision and comment&lt;br&gt;is stored as feedback. The AI&lt;br&gt;&lt;b&gt;improves its strategy&lt;/b&gt; for the&lt;br&gt;next negotiation automatically." vertex="1">
           <mxGeometry height="155" width="240" x="1007" y="590" as="geometry" />
         </mxCell>
-        <mxCell id="arr_learnloop" edge="1" parent="1" source="step5_box" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#F89738;strokeWidth=2;dashed=1;fontSize=9;fontColor=#F89738;exitX=0;exitY=0.5;entryX=0.5;entryY=1;endArrow=block;endFill=1;endSize=8;" target="agent_hero_bg" value="Continuous improvement">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="780" y="667" />
-              <mxPoint x="800" y="667" />
-              <mxPoint x="800" y="325" />
-            </Array>
-          </mxGeometry>
+        <mxCell id="bench_box" parent="1" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#DBDBDB;strokeWidth=1.5;fontSize=13;fontColor=#09131b;verticalAlign=top;align=center;arcSize=8;" value="📊&lt;font style=&quot;font-size: 17px;&quot;&gt;  Internal Benchmark Data&lt;br&gt;&lt;/font&gt;&lt;br&gt;15+ professional service roles&lt;br&gt;benchmarked with P25 / P50 / P75 / P90&lt;br&gt;rate percentiles. Agent always negotiates from&lt;br&gt;an evidence-based position." vertex="1">
+          <mxGeometry height="131" width="360" x="353" y="492" as="geometry" />
         </mxCell>
-        <mxCell id="bench_box" parent="1" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#DBDBDB;strokeWidth=1.5;fontSize=11;fontColor=#09131b;verticalAlign=top;align=center;arcSize=8;" value="📊  Internal Benchmark Data&#xa;&#xa;15+ professional service roles&#xa;benchmarked with P25 / P50 / P75 / P90&#xa;rate percentiles.&#xa;&#xa;Agent always negotiates from&#xa;an evidence-based position." vertex="1">
-          <mxGeometry height="165" width="360" x="353" y="492" as="geometry" />
-        </mxCell>
-        <mxCell id="bench_arrow" edge="1" parent="1" source="bench_box" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#DBDBDB;strokeWidth=2;dashed=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;endArrow=block;endFill=1;endSize=8;" target="agent_hero_bg" value="">
+        <mxCell id="bench_arrow" edge="1" parent="1" source="bench_box" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#314354;strokeWidth=2;dashed=1;exitX=0.5;exitY=0;entryX=0.391;entryY=1.044;endArrow=block;endFill=1;endSize=8;fillColor=#647687;entryDx=0;entryDy=0;entryPerimeter=0;" target="agent_hero_pts" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="benefits_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=10;fontStyle=1;fontColor=#8B8B8B;letterSpacing=3;" value="KEY BUSINESS BENEFITS" vertex="1">
@@ -151,14 +130,14 @@
         <mxCell id="ben6" parent="1" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F89738;strokeWidth=2;fontSize=11;fontColor=#09131b;verticalAlign=top;align=center;arcSize=8;" value="🔒  Human in the Loop&#xa;&#xa;Category Manager retains full&#xa;control — approve, re-negotiate&#xa;or send for offline review." vertex="1">
           <mxGeometry height="130" width="210" x="1250" y="828" as="geometry" />
         </mxCell>
-        <mxCell id="glance_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;fontStyle=1;fontColor=#8B8B8B;letterSpacing=3;" value="TWO PORTALS" vertex="1">
-          <mxGeometry height="18" width="260" x="50" y="278" as="geometry" />
+        <mxCell id="glance_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=17;fontStyle=1;fontColor=#8B8B8B;letterSpacing=3;" value="TWO PORTALS" vertex="1">
+          <mxGeometry height="18" width="260" x="50" y="275" as="geometry" />
         </mxCell>
-        <mxCell id="cm_portal_badge" parent="1" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#09131b;strokeColor=#09131b;fontSize=11;fontColor=#FFFFFF;verticalAlign=middle;align=center;arcSize=8;" value="📁  Category Manager Portal&#xa;Upload · Track · Approve" vertex="1">
+        <mxCell id="cm_portal_badge" parent="1" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#09131b;strokeColor=#09131b;fontSize=15;fontColor=#FFFFFF;verticalAlign=middle;align=center;arcSize=8;" value="&amp;nbsp;Category Manager Portal&lt;br&gt;Upload · Track · Approve" vertex="1">
           <mxGeometry height="55" width="260" x="50" y="300" as="geometry" />
         </mxCell>
-        <mxCell id="vendor_portal_badge" parent="1" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#F89738;strokeColor=#F89738;fontSize=11;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="💬  Vendor Portal&#xa;Connect · Negotiate · Agree" vertex="1">
-          <mxGeometry height="55" width="260" x="50" y="365" as="geometry" />
+        <mxCell id="vendor_portal_badge" parent="1" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#F89738;strokeColor=#F89738;fontSize=15;fontColor=#09131b;verticalAlign=middle;align=center;arcSize=8;" value="Vendor Portal&lt;br&gt;Connect · Negotiate · Agree" vertex="1">
+          <mxGeometry height="55" width="260" x="50" y="368.5" as="geometry" />
         </mxCell>
         <mxCell id="flow_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;fontStyle=1;fontColor=#8B8B8B;letterSpacing=3;" value="CONTRACT LIFECYCLE" vertex="1">
           <mxGeometry height="18" width="260" x="50" y="445" as="geometry" />
@@ -203,7 +182,15 @@
           <mxGeometry height="36" width="36" x="1004" y="369" as="geometry" />
         </mxCell>
         <mxCell id="step5_num" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F89738;strokeColor=#F89738;fontColor=#09131b;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" value="5" vertex="1">
-          <mxGeometry height="36" width="36" x="1014" y="596" as="geometry" />
+          <mxGeometry height="36" width="36" x="1007" y="596" as="geometry" />
+        </mxCell>
+        <mxCell id="Px8A8Ba7KXrXAlNDHtMm-3" edge="1" parent="1" source="step5_box" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.581;entryY=1.033;entryDx=0;entryDy=0;entryPerimeter=0;fillColor=#fa6800;strokeColor=#C73500;strokeWidth=2;dashed=1;" target="agent_hero_pts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Px8A8Ba7KXrXAlNDHtMm-4" connectable="0" parent="Px8A8Ba7KXrXAlNDHtMm-3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" value="Continous Improvement" vertex="1">
+          <mxGeometry relative="1" x="0.346" y="2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>

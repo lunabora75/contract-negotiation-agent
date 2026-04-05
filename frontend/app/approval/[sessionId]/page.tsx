@@ -179,7 +179,7 @@ export default function ApprovalPage() {
   const [analysis,   setAnalysis]   = useState<AnalysisData | null>(null);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState("");
-  const [decision,   setDecision]   = useState<"approved" | "renegotiate" | "offline_review" | "">("");
+  const [decision,   setDecision]   = useState<"approved" | "renegotiate" | "offline_review" | null>(null);
   const [comments,   setComments]   = useState("");
   const [approver,   setApprover]   = useState("");
   const [submitted,  setSubmitted]  = useState(false);
@@ -252,14 +252,14 @@ export default function ApprovalPage() {
   if (submitted) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.light }}>
       <div style={{ textAlign: "center", padding: 40, borderRadius: 20, background: C.white, border: `1px solid ${C.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.08)", maxWidth: 400 }}>
-        <div style={{ width: 64, height: 64, borderRadius: "50%", background: decisionMeta[decision as keyof typeof decisionMeta]?.iconBg ?? C.light, border: `2px solid ${decisionMeta[decision as keyof typeof decisionMeta]?.iconBorder ?? C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 20px" }}>
-          {decisionMeta[decision as keyof typeof decisionMeta]?.icon ?? "✓"}
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: decisionMeta[decision! as keyof typeof decisionMeta]?.iconBg ?? C.light, border: `2px solid ${decisionMeta[decision! as keyof typeof decisionMeta]?.iconBorder ?? C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 20px" }}>
+          {decisionMeta[decision! as keyof typeof decisionMeta]?.icon ?? "✓"}
         </div>
         <h2 style={{ fontFamily: FH, fontWeight: 700, fontSize: 20, color: C.dark, margin: "0 0 8px" }}>
-          {decisionMeta[decision as keyof typeof decisionMeta]?.title ?? "Decision Recorded"}
+          {decisionMeta[decision! as keyof typeof decisionMeta]?.title ?? "Decision Recorded"}
         </h2>
         <p style={{ fontSize: 13, color: C.gray, fontFamily: FB, margin: "0 0 8px" }}>
-          {decisionMeta[decision as keyof typeof decisionMeta]?.msg}
+          {decisionMeta[decision! as keyof typeof decisionMeta]?.msg}
         </p>
         {comments && <p style={{ fontSize: 12, background: C.light, borderRadius: 8, padding: "8px 12px", color: C.gray, fontFamily: FB, margin: "8px 0 0" }}>"{comments}"</p>}
         <p style={{ fontSize: 11, color: C.border, fontFamily: FB, marginTop: 16 }}>Returning to Category Manager portal…</p>
@@ -665,7 +665,7 @@ export default function ApprovalPage() {
                   {submitting ? "Submitting…" :
                    decision === "approved"       ? "Confirm Approval" :
                    decision === "renegotiate"    ? "Send for Re-negotiation" :
-                   decision === "offline_review" ? "Send for Offline Review" :
+                   decision === "offline_review" ? "Move to Offline Review" :
                    "Select a Decision Above"}
                 </button>
 

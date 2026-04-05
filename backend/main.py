@@ -43,6 +43,7 @@ S_APPROVED         = "approved"
 S_REJECTED         = "rejected"
 S_RENEGOTIATE      = "re_negotiate"
 S_PENDING_OFFLINE  = "pending_offline_review"
+S_SENT_FOR_RENEG   = "sent_for_renegotiation"
 
 # ── file text extraction ──────────────────────────────────────────────────
 def _extract_text(filename: str, content: bytes) -> str:
@@ -188,10 +189,10 @@ def initiate_negotiation(session_id: str):
     session = SESSIONS.get(session_id)
     if not session:
         raise HTTPException(404, "Session not found")
-    if session.get("status") not in (S_SENT_FOR_NEG, S_NEG_IN_PROGRESS):
+    if session.get("status") not in (S_SENT_FOR_NEG, S_NEG_IN_PROGRESS, S_SENT_FOR_RENEG):
         raise HTTPException(400, f"Session not ready for negotiation. Current status: {session.get('status')}")
 
-    if session.get("status") == S_SENT_FOR_NEG:
+    if session.get("status") in (S_SENT_FOR_NEG, S_SENT_FOR_RENEG):
         agent       = NegotiationAgent()
         reply, msgs = agent.run_turn(
             [],
@@ -291,8 +292,6 @@ def submit_approval(session_id: str, body: ApprovalRequest):
         session["status"] = S_APPROVED
         rating, outcome = 5, "agreed"
     elif decision == "renegotiate":
-        session["status"]              = S_RENEGOTIATE
-        session["renegotiate_reason"]  = body.comments
         rating, outcome = 2, "no_deal"
     else:  # offline_review
         session["status"] = S_PENDING_OFFLINE
@@ -311,6 +310,14 @@ def submit_approval(session_id: str, body: ApprovalRequest):
         session["messages"] + [{"role": "user", "content": feedback_msg}]
     )
     session["messages"] = updated
+
+    # For renegotiate: reset session state so agent starts fresh with vendor
+    if decision == "renegotiate":
+        session["messages"]           = []
+        session["chat"]               = []
+        session["approval"]           = None
+        session["renegotiate_reason"] = body.comments
+        session["status"]             = S_SENT_FOR_RENEG
 
     return {"saved": True, "decision": decision, "status": session["status"]}
 
